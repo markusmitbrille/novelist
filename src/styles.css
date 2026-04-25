@@ -326,6 +326,12 @@ body::before {
   outline: 1px solid var(--search-scope-outline);
 }
 
+.cm-selectionMatch,
+.cm-selectionMatch-main {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 .search-popup {
   position: absolute;
   top: 1.2rem;
@@ -368,8 +374,28 @@ body::before {
 .settings-grid {
   display: grid;
   gap: 1rem;
-  min-width: min(540px, calc(100vw - 96px));
+  width: min(720px, calc(100vw - 96px));
+  min-width: 0;
   padding-top: 0.2rem;
+}
+
+#settingsDialog {
+  min-width: min(760px, calc(100vw - 48px));
+  max-width: min(760px, calc(100vw - 48px));
+  max-height: min(820px, calc(100vh - 48px));
+}
+
+#settingsDialog [slot="content"] {
+  min-width: 0;
+  overflow: auto;
+  padding-inline-end: 0.25rem;
+}
+
+.settings-grid md-outlined-select,
+.settings-grid md-outlined-text-field {
+  display: block;
+  width: 100%;
+  min-width: 0;
 }
 
 .settings-checkbox-row {
@@ -394,6 +420,225 @@ body::before {
 .settings-checkbox-row__supporting {
   font-size: 0.8rem;
   color: var(--text-soft);
+}
+
+.settings-theme-field {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.settings-theme-field__label {
+  font-size: 0.88rem;
+  line-height: 1.2;
+  color: var(--text-soft);
+  padding-inline: 0.15rem;
+}
+
+.theme-picker {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  padding: 1px;
+  border-radius: 26px;
+  background: var(--md-sys-color-outline-variant);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--md-sys-color-outline) 52%, transparent);
+}
+
+.theme-picker__cell {
+  min-width: 0;
+  padding: 0.8rem 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-surface-container-low);
+  overflow: hidden;
+}
+
+.theme-picker__cell.is-top-left {
+  border-top-left-radius: 25px;
+}
+
+.theme-picker__cell.is-top-right {
+  border-top-right-radius: 25px;
+}
+
+.theme-picker__cell.is-bottom-left {
+  border-bottom-left-radius: 25px;
+}
+
+.theme-picker__cell.is-bottom-right {
+  border-bottom-right-radius: 25px;
+}
+
+.theme-swatch {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--theme-swatch-color);
+  color: var(--theme-swatch-contrast);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--md-sys-color-shadow) 14%, transparent),
+    0 0 0 2px transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: transform 140ms ease, box-shadow 140ms ease, outline-color 140ms ease;
+}
+
+.theme-swatch:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--md-sys-color-shadow) 14%, transparent),
+    0 6px 14px color-mix(in srgb, var(--md-sys-color-shadow) 16%, transparent);
+}
+
+.theme-swatch:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 3px;
+}
+
+.theme-swatch.is-selected {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--md-sys-color-shadow) 14%, transparent),
+    0 0 0 3px var(--md-sys-color-surface-container-low),
+    0 0 0 5px var(--md-sys-color-primary);
+}
+
+.theme-swatch__dot {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  display: block;
+}
+
+.theme-swatch__check {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  opacity: 0;
+  transform: scale(0.88);
+  transition: opacity 120ms ease, transform 120ms ease;
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow) 28%, transparent);
+}
+
+.theme-swatch.is-selected .theme-swatch__check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.word-count-dialog {
+  display: grid;
+  gap: 1rem;
+  width: min(640px, calc(100vw - 96px));
+  min-width: 0;
+  padding-top: 0.2rem;
+  overflow: hidden;
+}
+
+.word-count-dialog,
+.word-count-dialog * {
+  box-sizing: border-box;
+}
+
+.word-count-dialog__hero {
+  display: grid;
+  gap: 0.3rem;
+  padding: 1rem 1.1rem 1.05rem;
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--md-sys-color-primary-container) 44%, transparent);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 16%, var(--md-sys-color-outline-variant));
+  width: 100%;
+}
+
+.word-count-dialog__eyebrow,
+.word-count-dialog__section-title {
+  font-size: 0.74rem;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.word-count-dialog__eyebrow {
+  color: var(--md-sys-color-primary);
+}
+
+.word-count-dialog__count-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.word-count-dialog__count {
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  line-height: 1;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.word-count-dialog__unit {
+  font-size: 0.92rem;
+  color: var(--text-soft);
+  font-weight: 500;
+}
+
+.word-count-dialog__supporting {
+  font-size: 0.83rem;
+  line-height: 1.4;
+  color: var(--text-soft);
+}
+
+.word-count-dialog__section {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.word-count-dialog__section-title {
+  color: var(--text-soft);
+  padding-inline: 0.1rem;
+}
+
+.word-count-dialog__list {
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-low) 92%, transparent);
+  width: 100%;
+}
+
+.word-count-dialog__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+}
+
+.word-count-dialog__label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.word-count-dialog__value {
+  font-size: 0.88rem;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+#wordCountDialog {
+  min-width: min(688px, calc(100vw - 48px));
+  max-width: min(688px, calc(100vw - 48px));
+  max-height: min(760px, calc(100vh - 48px));
 }
 
 .app-tooltip {
@@ -478,6 +723,32 @@ body::before {
 
   .search-popup__count {
     grid-column: 1 / -1;
+  }
+
+  #settingsDialog,
+  #wordCountDialog {
+    min-width: min(calc(100vw - 24px), 688px);
+    max-width: min(calc(100vw - 24px), 688px);
+    max-height: calc(100vh - 24px);
+  }
+
+  .settings-grid,
+  .word-count-dialog {
+    width: min(100%, calc(100vw - 48px));
+  }
+
+  .theme-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .word-count-dialog__row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .word-count-dialog__value {
+    white-space: normal;
   }
 }
 

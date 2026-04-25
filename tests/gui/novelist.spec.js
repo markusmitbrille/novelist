@@ -125,4 +125,52 @@ test.describe("Novelist", () => {
     await page.evaluate(() => window.__NOVELIST_TEST_API__.setText("One two three four"));
     await expect(page.locator(".menubar__caret-text")).toContainText("4 words");
   });
+
+  test("editor settings shows theme picker without horizontal overflow", async ({ page }) => {
+    await gotoApp(page);
+
+    await clickMenuAction(page, "settings");
+    const dialog = page.locator("#settingsDialog");
+    await expect(dialog).toBeVisible();
+    await expect(page.locator("#settingsThemePicker")).toBeVisible();
+    await expect(page.locator("[data-theme-choice]")).toHaveCount(8);
+    await expect(page.locator(".theme-swatch.is-selected")).toHaveCount(1);
+
+    const overflow = await page.locator("#settingsDialog [slot='content']").evaluate((element) => ({
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+    }));
+    expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1);
+
+    await page.locator('[data-theme-choice="sage-light"]').click();
+    await expect.poll(async () => page.evaluate(() => document.documentElement.dataset.theme)).toBe("sage-light");
+  });
+
+  test("word count dialog opens with document stats", async ({ page }) => {
+    await gotoApp(page);
+    await page.evaluate(() => window.__NOVELIST_TEST_API__.setText("One two three.\n\nFour five."));
+
+    await clickMenuAction(page, "word-count");
+    await expect(page.locator("#wordCountDialog")).toBeVisible();
+    await expect(page.locator("#wordCountDialogWordCount")).toHaveText("5");
+    await expect(page.locator('[data-word-count-stat="characters"] .word-count-dialog__value')).toHaveText("26");
+    await expect(page.locator('[data-word-count-stat="characters-no-spaces"] .word-count-dialog__value')).toHaveText("21");
+    await expect(page.locator('[data-word-count-stat="paragraphs"] .word-count-dialog__value')).toHaveText("2");
+    await expect(page.locator('[data-word-count-stat="lines"] .word-count-dialog__value')).toHaveText("3");
+    await expect(page.locator('[data-word-count-stat="reading-time"] .word-count-dialog__value')).toHaveText("1 minute");
+  });
+
+  test("selection does not highlight identical text spans", async ({ page }) => {
+    await gotoApp(page);
+    await page.evaluate(() => window.__NOVELIST_TEST_API__.setText("Alpha beta Alpha"));
+
+    await page.locator(".cm-content").click();
+    await page.keyboard.press(process.platform === "darwin" ? "Meta+Home" : "Control+Home");
+    for (let index = 0; index < 5; index += 1) {
+      await page.keyboard.press("Shift+ArrowRight");
+    }
+    await page.waitForTimeout(300);
+
+    await expect(page.locator(".cm-selectionMatch, .cm-selectionMatch-main")).toHaveCount(0);
+  });
 });

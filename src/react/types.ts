@@ -25,6 +25,15 @@ export type SearchState = {
   scope: { from: number; to: number } | null;
 };
 
+export type DocumentStats = {
+  wordCount: number;
+  characterCount: number;
+  characterCountNoSpaces: number;
+  paragraphCount: number;
+  lineCount: number;
+  estimatedReadingMinutes: number;
+};
+
 export type EditorManager = {
   setDocument: (text: string) => void;
   getText: () => string;

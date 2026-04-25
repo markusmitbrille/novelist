@@ -1,9 +1,28 @@
 import { DEFAULT_DOCUMENT_TITLE } from "./constants";
 import type { NovelistSettings } from "./react/types";
-import { DEFAULT_SETTINGS, FONT_OPTIONS } from "./constants";
+import { DEFAULT_SETTINGS, FONT_OPTIONS, THEME_PRESETS } from "./constants";
 
 export function countWords(text: string) {
   return String(text || "").trim().split(/\s+/).filter(Boolean).length;
+}
+
+export function countDocumentStats(text: string) {
+  const value = String(text || "");
+  const wordCount = countWords(value);
+  const characterCount = value.length;
+  const characterCountNoSpaces = value.replace(/\s/g, "").length;
+  const paragraphCount = value.trim() ? value.trim().split(/\n\s*\n/).filter((paragraph) => paragraph.trim()).length : 0;
+  const lineCount = value ? value.split(/\r\n|\r|\n/).length : 0;
+  const estimatedReadingMinutes = wordCount === 0 ? 0 : Math.max(1, Math.ceil(wordCount / 225));
+
+  return {
+    wordCount,
+    characterCount,
+    characterCountNoSpaces,
+    paragraphCount,
+    lineCount,
+    estimatedReadingMinutes,
+  };
 }
 
 export function normalizeDocumentTitle(value: string) {
@@ -22,6 +41,6 @@ export function normalizeSettings(settings: Partial<NovelistSettings> | null | u
     fontFamily: FONT_OPTIONS.some((option) => option.value === settings?.fontFamily)
       ? String(settings?.fontFamily)
       : DEFAULT_SETTINGS.fontFamily,
-    theme: String(settings?.theme || DEFAULT_SETTINGS.theme),
+    theme: settings?.theme && THEME_PRESETS[settings.theme] ? String(settings.theme) : DEFAULT_SETTINGS.theme,
   };
 }

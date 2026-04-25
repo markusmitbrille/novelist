@@ -4,7 +4,7 @@ import { useDocumentSession } from "./hooks/useDocumentSession";
 import { useEditorBridge } from "./hooks/useEditorBridge";
 import { useSearchController } from "./hooks/useSearchController";
 import { useSettings } from "./hooks/useSettings";
-import { countWords } from "./text";
+import { countDocumentStats, countWords } from "./text";
 import { getShortcutAction } from "./react/ui";
 import { AppTooltip } from "./react/components/AppTooltip";
 import { DirtyDocumentDialog } from "./react/components/DirtyDocumentDialog";
@@ -12,12 +12,14 @@ import { FormatBar } from "./react/components/FormatBar";
 import { Menubar } from "./react/components/Menubar";
 import { SearchPopup } from "./react/components/SearchPopup";
 import { SettingsDialog } from "./react/components/SettingsDialog";
+import { WordCountDialog } from "./react/components/WordCountDialog";
 import { MdDialog } from "./react/md3";
 import { icon } from "./react/head-assets";
 
 export default function App() {
   const [isSupported] = useState(supportsFileSystemAccess);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [wordCountOpen, setWordCountOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const documentSession = useDocumentSession();
   const { settings, updateSettings } = useSettings();
@@ -31,6 +33,7 @@ export default function App() {
   });
   const searchController = useSearchController(editorBridge.editorRef);
   const wordCount = useMemo(() => countWords(documentSession.state.text), [documentSession.state.text]);
+  const documentStats = useMemo(() => countDocumentStats(documentSession.state.text), [documentSession.state.text]);
   const displayName = documentSession.state.fileName || `${documentSession.state.title}.md`;
 
   syncSearchRef.current = () => searchController.syncSearchResults({ reveal: false });
@@ -62,7 +65,7 @@ export default function App() {
           setSettingsOpen(true);
           break;
         case "word-count":
-          documentSession.setStatus(`${wordCount.toLocaleString()} words.`);
+          setWordCountOpen(true);
           break;
         case "about":
           setAboutOpen(true);
@@ -88,7 +91,7 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
-      if (event.isComposing || settingsOpen || aboutOpen || documentSession.dirtyDialogOpen) {
+      if (event.isComposing || settingsOpen || wordCountOpen || aboutOpen || documentSession.dirtyDialogOpen) {
         return;
       }
       if (event.key === "Escape" && searchController.search.isOpen) {
@@ -104,7 +107,7 @@ export default function App() {
     };
     document.addEventListener("keydown", handleKeyDown, true);
     return () => document.removeEventListener("keydown", handleKeyDown, true);
-  }, [searchController.search, settingsOpen, aboutOpen, documentSession.dirtyDialogOpen, wordCount]);
+  }, [searchController.search, settingsOpen, wordCountOpen, aboutOpen, documentSession.dirtyDialogOpen]);
 
   useEffect(() => {
     window.__NOVELIST_TEST_API__ = {
@@ -191,6 +194,11 @@ export default function App() {
             editorBridge.rebuildEditor();
           }
         }}
+      />
+      <WordCountDialog
+        open={wordCountOpen}
+        stats={documentStats}
+        onClose={() => setWordCountOpen(false)}
       />
       <DirtyDocumentDialog
         open={documentSession.dirtyDialogOpen}

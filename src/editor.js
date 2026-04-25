@@ -1,10 +1,11 @@
-﻿import { basicSetup } from "codemirror";
-import { EditorSelection, EditorState, RangeSetBuilder, StateEffect, StateField } from "@codemirror/state";
-import { redo, undo, indentWithTab } from "@codemirror/commands";
+import { closeBrackets, closeBracketsKeymap, autocompletion, completionKeymap } from "@codemirror/autocomplete";
+import { redo, undo, indentWithTab, defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
-import { HighlightStyle, syntaxHighlighting, syntaxTree } from "@codemirror/language";
-import { Decoration, EditorView, keymap } from "@codemirror/view";
-import { search, SearchCursor, SearchQuery } from "@codemirror/search";
+import { bracketMatching, defaultHighlightStyle, foldGutter, foldKeymap, HighlightStyle, indentOnInput, syntaxHighlighting, syntaxTree } from "@codemirror/language";
+import { lintKeymap } from "@codemirror/lint";
+import { EditorSelection, EditorState, RangeSetBuilder, StateEffect, StateField } from "@codemirror/state";
+import { Decoration, drawSelection, dropCursor, EditorView, highlightActiveLine, highlightActiveLineGutter, highlightSpecialChars, keymap, lineNumbers, rectangularSelection, crosshairCursor } from "@codemirror/view";
+import { search, SearchCursor, searchKeymap, SearchQuery } from "@codemirror/search";
 import { tags } from "@lezer/highlight";
 
 const markdownHighlightStyle = HighlightStyle.define([
@@ -200,10 +201,34 @@ function createState(docText, onDocChange, onSelectionChange) {
   return EditorState.create({
     doc: docText,
     extensions: [
-      basicSetup,
+      lineNumbers(),
+      highlightActiveLineGutter(),
+      highlightSpecialChars(),
+      history(),
+      foldGutter(),
+      drawSelection(),
+      dropCursor(),
+      EditorState.allowMultipleSelections.of(true),
+      indentOnInput(),
+      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+      bracketMatching(),
+      closeBrackets(),
+      autocompletion(),
+      rectangularSelection(),
+      crosshairCursor(),
+      highlightActiveLine(),
       search({}),
       markdown(),
-      keymap.of([indentWithTab]),
+      keymap.of([
+        indentWithTab,
+        ...closeBracketsKeymap,
+        ...defaultKeymap,
+        ...searchKeymap,
+        ...historyKeymap,
+        ...foldKeymap,
+        ...completionKeymap,
+        ...lintKeymap,
+      ]),
       EditorView.lineWrapping,
       syntaxHighlighting(markdownHighlightStyle),
       createEditorTheme(),
