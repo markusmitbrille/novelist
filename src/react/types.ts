@@ -1,0 +1,60 @@
+export type NovelistSettings = {
+  theme: string;
+  fontFamily: string;
+  fontSize: number;
+  backgroundImage: string;
+  currentLineHighlight: boolean;
+};
+
+export type EditorActiveFormats = Record<string, boolean>;
+
+export type EditorCaretInfo = {
+  offset: number;
+  line: number;
+  column: number;
+};
+
+export type EditorManager = {
+  setDocument: (text: string) => void;
+  getText: () => string;
+  getActiveFormats: () => EditorActiveFormats;
+  getCaretInfo: () => EditorCaretInfo;
+  createSearchQuery: (searchText: string, options?: { caseSensitive?: boolean }) => unknown;
+  findMatches: (query: unknown, scope?: { from: number; to: number } | null) => Array<{ from: number; to: number }>;
+  getSelectionRange: () => { from: number; to: number; head: number; anchor: number; empty: boolean };
+  selectAndRevealRange: (range: { from: number; to: number }, options?: { focus?: boolean }) => void;
+  replaceRange: (range: { from: number; to: number }, replacement: string, options?: { focus?: boolean }) => { from: number; to: number } | null;
+  replaceAllRanges: (matches: Array<{ from: number; to: number }>, replacement: string, options?: { focus?: boolean }) => void;
+  setSearchDecorations: (value: {
+    scope?: { from: number; to: number } | null;
+    matches?: Array<{ from: number; to: number }>;
+    activeMatch?: { from: number; to: number } | null;
+  }) => void;
+  clearSearchDecorations: () => void;
+  applyFormat: (action: string) => void;
+  focus: () => void;
+  enableStreamingAutoscroll: () => void;
+  disableStreamingAutoscroll: () => void;
+  appendText: (text: string) => void;
+  rebuildFromCurrentText: () => void;
+  destroy: () => void;
+};
+
+declare global {
+  interface Window {
+    __NOVELIST_TEST_API__?: {
+      getState: () => {
+        title: string;
+        fileName: string;
+        text: string;
+        isDirty: boolean;
+        saveStatus: string;
+        unsupported: boolean;
+      };
+      setText?: (text: string) => void;
+      save?: () => Promise<void>;
+    };
+    showOpenFilePicker?: (options?: unknown) => Promise<FileSystemFileHandle[]>;
+    showSaveFilePicker?: (options?: unknown) => Promise<FileSystemFileHandle>;
+  }
+}

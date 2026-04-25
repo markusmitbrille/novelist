@@ -1,0 +1,21 @@
+legacy pylot code/
+perchance docs/
+reference ai-story-generator code/
+
+dist/
+node_modules/
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+.vscode/
+.idea/
+
+*.log
+
+.tmp-*/
+.tmp-*
+coverage/
+playwright-report/
+test-results/
