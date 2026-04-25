@@ -35,10 +35,42 @@ async function gotoApp(page) {
 }
 
 async function clickMenuAction(page, action) {
-  await page.locator(`md-menu-item[data-menu-action="${action}"]`).evaluate((element) => element.click());
+  const menuByAction = {
+    new: "file",
+    open: "file",
+    save: "file",
+    "save-as": "file",
+    undo: "edit",
+    redo: "edit",
+    find: "edit",
+    replace: "edit",
+    settings: "view",
+    "word-count": "view",
+    divider: "insert",
+    link: "insert",
+    about: "help",
+  };
+  const menuName = menuByAction[action];
+  if (!menuName) {
+    throw new Error(`No visible menu mapped for action ${action}`);
+  }
+  await page.locator(`[data-menu-trigger="${menuName}"]`).click();
+  const item = page.locator(`md-menu-item[data-menu-action="${action}"]`);
+  await expect(item).toBeVisible();
+  await item.click();
 }
 
 test.describe("Novelist", () => {
+  test("unsupported browser screen renders without File System Access", async ({ page }) => {
+    await page.addInitScript(() => {
+      delete window.showOpenFilePicker;
+      delete window.showSaveFilePicker;
+    });
+    await page.goto("/docs/index.html?e2e=unsupported");
+    await expect(page.locator("#novelistRoot")).toHaveAttribute("data-app-ready", "false");
+    await expect(page.getByText("Novelist requires a Chromium-based browser.")).toBeVisible();
+  });
+
   test("opens, edits, and saves a markdown file", async ({ page }) => {
     await gotoApp(page);
 
@@ -50,6 +82,20 @@ test.describe("Novelist", () => {
 
     await expect.poll(async () => page.evaluate(() => window.__NOVELIST_TEST_WRITES__.at(-1))).toBe("# Chapter\n\nSaved from Chromium.");
     await expect(page.locator("#novelistRoot")).toHaveAttribute("data-dirty", "false");
+  });
+
+  test("dirty guard blocks New until the user chooses an action", async ({ page }) => {
+    await gotoApp(page);
+    await page.evaluate(() => window.__NOVELIST_TEST_API__.setText("Keep this draft."));
+
+    await clickMenuAction(page, "new");
+    await expect(page.locator("#dirtyDocumentDialog")).toBeVisible();
+    await page.locator("#dirtyCancelButton").click();
+    await expect.poll(async () => page.evaluate(() => window.__NOVELIST_TEST_API__.getState().text)).toBe("Keep this draft.");
+
+    await clickMenuAction(page, "new");
+    await page.locator("#dirtyDiscardButton").click();
+    await expect.poll(async () => page.evaluate(() => window.__NOVELIST_TEST_API__.getState().text)).toBe("");
   });
 
   test("find and replace updates editor text", async ({ page }) => {
@@ -68,5 +114,15 @@ test.describe("Novelist", () => {
     await page.locator("#searchReplaceAllButton").click();
 
     await expect.poll(async () => page.evaluate(() => window.__NOVELIST_TEST_API__.getState().text)).toBe("Gamma beta Gamma");
+  });
+
+  test("word count updates after repeated dirty edits", async ({ page }) => {
+    await gotoApp(page);
+
+    await page.evaluate(() => window.__NOVELIST_TEST_API__.setText("One two"));
+    await expect(page.locator(".menubar__caret-text")).toContainText("2 words");
+
+    await page.evaluate(() => window.__NOVELIST_TEST_API__.setText("One two three four"));
+    await expect(page.locator(".menubar__caret-text")).toContainText("4 words");
   });
 });

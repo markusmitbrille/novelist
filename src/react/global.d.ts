@@ -51,12 +51,6 @@ declare module "react" {
 }
 
 declare global {
-  interface Window {
-    __NOVELIST_TEST_API__?: {
-      getState: () => unknown;
-    };
-  }
-
   interface NavigatorUAData {
     platform: string;
   }

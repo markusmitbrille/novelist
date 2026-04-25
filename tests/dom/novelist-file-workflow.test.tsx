@@ -107,6 +107,50 @@ describe("Novelist file workflow", () => {
     await waitFor(() => expect(writes.at(-1)).toBe("Autosaved text."));
   });
 
+  it("keeps repeated dirty edits reflected in status-derived UI", async () => {
+    installFileSystemMocks();
+    render(<App />);
+
+    act(() => {
+      window.__NOVELIST_TEST_API__?.setText?.("One two");
+    });
+    expect(screen.getByText(/2 words/)).toBeTruthy();
+
+    act(() => {
+      window.__NOVELIST_TEST_API__?.setText?.("One two three four");
+    });
+    expect(screen.getByText(/4 words/)).toBeTruthy();
+    expect(window.__NOVELIST_TEST_API__?.getState().isDirty).toBe(true);
+  });
+
+  it("guards dirty documents before replacing them with New", async () => {
+    installFileSystemMocks();
+    render(<App />);
+
+    act(() => {
+      window.__NOVELIST_TEST_API__?.setText?.("Draft that should survive.");
+    });
+    await act(async () => {
+      fireEvent.click(document.querySelector('[data-menu-action="new"]') as Element);
+    });
+
+    await waitFor(() => expect(screen.getByText("Save your changes before replacing the current document?")).toBeTruthy());
+    await act(async () => {
+      fireEvent.click(document.querySelector("#dirtyCancelButton") as Element);
+    });
+    expect(window.__NOVELIST_TEST_API__?.getState().text).toBe("Draft that should survive.");
+
+    await act(async () => {
+      fireEvent.click(document.querySelector('[data-menu-action="new"]') as Element);
+    });
+    await act(async () => {
+      fireEvent.click(document.querySelector("#dirtyDiscardButton") as Element);
+    });
+
+    await waitFor(() => expect(window.__NOVELIST_TEST_API__?.getState().text).toBe(""));
+    expect(window.__NOVELIST_TEST_API__?.getState().isDirty).toBe(false);
+  });
+
   it("uses Save As for an untitled document", async () => {
     const { writes } = installFileSystemMocks();
     render(<App />);

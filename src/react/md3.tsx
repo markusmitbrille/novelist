@@ -83,9 +83,19 @@ export const MdDialog = forwardRef<MaterialDialogElement, MaterialBaseProps & {
       return;
     }
     if (open && !element.open) {
-      element.show();
+      if (typeof element.show === "function") {
+        element.show();
+      } else {
+        element.open = true;
+        element.setAttribute("open", "");
+      }
     } else if (!open && element.open) {
-      element.close();
+      if (typeof element.close === "function") {
+        element.close();
+      } else {
+        element.open = false;
+        element.removeAttribute("open");
+      }
     }
   }, [open, ref]);
 
@@ -113,9 +123,19 @@ export const MdMenu = forwardRef<MaterialMenuElement, MaterialBaseProps & {
     }
     element.anchorElement = anchorElement ?? null;
     if (open && !element.open) {
-      element.show();
+      if (typeof element.show === "function") {
+        element.show();
+      } else {
+        element.open = true;
+        element.setAttribute("open", "");
+      }
     } else if (!open && element.open) {
-      element.close();
+      if (typeof element.close === "function") {
+        element.close();
+      } else {
+        element.open = false;
+        element.removeAttribute("open");
+      }
     }
   }, [open, anchorElement, ref]);
 

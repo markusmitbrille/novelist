@@ -14,6 +14,17 @@ export type EditorCaretInfo = {
   column: number;
 };
 
+export type SearchState = {
+  isOpen: boolean;
+  mode: "find" | "replace";
+  query: string;
+  replacement: string;
+  matchCase: boolean;
+  matches: Array<{ from: number; to: number }>;
+  currentIndex: number;
+  scope: { from: number; to: number } | null;
+};
+
 export type EditorManager = {
   setDocument: (text: string) => void;
   getText: () => string;
@@ -33,9 +44,6 @@ export type EditorManager = {
   clearSearchDecorations: () => void;
   applyFormat: (action: string) => void;
   focus: () => void;
-  enableStreamingAutoscroll: () => void;
-  disableStreamingAutoscroll: () => void;
-  appendText: (text: string) => void;
   rebuildFromCurrentText: () => void;
   destroy: () => void;
 };

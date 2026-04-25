@@ -1,18 +1,23 @@
-import { DEFAULT_THEME_ID, FONT_OPTIONS, resolveThemePreset } from "../constants.js";
+import { DEFAULT_THEME_ID, FONT_OPTIONS, resolveThemePreset } from "../constants";
+import type { NovelistSettings } from "./types";
 
-export function getCurrentThemePreset(documentState) {
+type ThemeDocumentState = {
+  settings?: NovelistSettings | null;
+};
+
+export function getCurrentThemePreset(documentState: ThemeDocumentState) {
   const themeId = documentState?.settings?.theme;
   return resolveThemePreset(themeId);
 }
 
-export function syncResolvedThemeId(documentState) {
+export function syncResolvedThemeId(documentState: ThemeDocumentState) {
   if (!documentState?.settings) {
     return DEFAULT_THEME_ID;
   }
   return getCurrentThemePreset(documentState).id;
 }
 
-export function applyThemeToShell(documentState) {
+export function applyThemeToShell(documentState: ThemeDocumentState) {
   if (!documentState?.settings) {
     return;
   }

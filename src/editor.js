@@ -7,7 +7,6 @@ import { Decoration, EditorView, keymap } from "@codemirror/view";
 import { search, SearchCursor, SearchQuery } from "@codemirror/search";
 import { tags } from "@lezer/highlight";
 
-const STREAMING_AUTOSCROLL_BOTTOM_TOLERANCE_PX = 2;
 const markdownHighlightStyle = HighlightStyle.define([
   { tag: tags.heading, fontWeight: "700", color: "var(--cm-heading)" },
   { tag: tags.heading1, fontSize: "1.6em", fontWeight: "700", color: "var(--cm-heading)" },
@@ -335,88 +334,13 @@ export function createEditorManager(options) {
     state: createState("", onDocChange, onSelectionChange),
     parent,
   });
-  let streamingAutoscrollEnabled = false;
-  let pendingStreamingAutoscrollFrame = null;
-  let ignoringProgrammaticScroll = false;
-
-  function isScrolledToBottom() {
-    const { scrollTop, clientHeight, scrollHeight } = view.scrollDOM;
-    return scrollTop + clientHeight >= scrollHeight - STREAMING_AUTOSCROLL_BOTTOM_TOLERANCE_PX;
-  }
-
-  function cancelPendingStreamingAutoscroll() {
-    if (pendingStreamingAutoscrollFrame !== null) {
-      cancelAnimationFrame(pendingStreamingAutoscrollFrame);
-      pendingStreamingAutoscrollFrame = null;
-    }
-  }
-
-  function setStreamingAutoscrollEnabled(nextValue) {
-    if (streamingAutoscrollEnabled === nextValue) {
-      return;
-    }
-    streamingAutoscrollEnabled = nextValue;
-    if (!nextValue) {
-      cancelPendingStreamingAutoscroll();
-    }
-  }
-
-  function scheduleScrollToBottom() {
-    cancelPendingStreamingAutoscroll();
-    pendingStreamingAutoscrollFrame = requestAnimationFrame(() => {
-      pendingStreamingAutoscrollFrame = null;
-      if (!streamingAutoscrollEnabled) {
-        return;
-      }
-      ignoringProgrammaticScroll = true;
-      view.scrollDOM.scrollTop = view.scrollDOM.scrollHeight;
-      requestAnimationFrame(() => {
-        ignoringProgrammaticScroll = false;
-      });
-    });
-  }
-
-  function scrollToDocumentEnd() {
-    view.dispatch({
-      effects: EditorView.scrollIntoView(view.state.doc.length, { y: "end" }),
-    });
-    scheduleScrollToBottom();
-  }
-
-  function handleScroll() {
-    if (ignoringProgrammaticScroll) {
-      return;
-    }
-    if (streamingAutoscrollEnabled) {
-      if (!isScrolledToBottom()) {
-        setStreamingAutoscrollEnabled(false);
-      }
-      return;
-    }
-    if (isScrolledToBottom()) {
-      setStreamingAutoscrollEnabled(true);
-    }
-  }
-
-  function bindScrollListener() {
-    view.scrollDOM.addEventListener("scroll", handleScroll);
-  }
-
-  function unbindScrollListener() {
-    view.scrollDOM.removeEventListener("scroll", handleScroll);
-  }
-
-  bindScrollListener();
 
   return {
     get view() {
       return view;
     },
     setDocument(text) {
-      cancelPendingStreamingAutoscroll();
-      unbindScrollListener();
       view.setState(createState(text, onDocChange, onSelectionChange));
-      bindScrollListener();
       onSelectionChange(view.state);
     },
     getText() {
@@ -463,24 +387,6 @@ export function createEditorManager(options) {
         line: line.number,
         column: (range.head - line.from) + 1,
       };
-    },
-    enableStreamingAutoscroll() {
-      setStreamingAutoscrollEnabled(true);
-      scrollToDocumentEnd();
-    },
-    disableStreamingAutoscroll() {
-      setStreamingAutoscrollEnabled(false);
-    },
-    appendText(text) {
-      const insertText = String(text ?? "");
-      const nextDocumentEnd = view.state.doc.length + insertText.length;
-      view.dispatch({
-        changes: { from: view.state.doc.length, insert: insertText },
-        ...(streamingAutoscrollEnabled ? { effects: EditorView.scrollIntoView(nextDocumentEnd, { y: "end" }) } : {}),
-      });
-      if (streamingAutoscrollEnabled) {
-        scheduleScrollToBottom();
-      }
     },
     setSelection(index) {
       view.dispatch({
@@ -545,15 +451,10 @@ export function createEditorManager(options) {
     rebuildFromCurrentText() {
       const text = view.state.doc.toString();
       const selection = view.state.selection.main.head;
-      cancelPendingStreamingAutoscroll();
-      unbindScrollListener();
       view.setState(createState(text, onDocChange, onSelectionChange));
-      bindScrollListener();
       view.dispatch({ selection: EditorSelection.cursor(Math.min(selection, text.length)) });
     },
     destroy() {
-      cancelPendingStreamingAutoscroll();
-      unbindScrollListener();
       view.destroy();
     },
     getActiveFormats() {

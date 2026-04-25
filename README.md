@@ -12,7 +12,7 @@ Novelist is a local markdown editor for Chromium-based browsers. It is designed 
 - Editor themes, font selection, font size, and current-line highlighting
 - Live caret position, line/column, word count, dirty state, and save status
 
-Novelist targets Chromium-based browsers such as Chrome and Edge. Unsupported browsers show a clear warning instead of falling back to download/import behavior.
+Novelist targets Chromium-based browsers such as Chrome and Edge. Unsupported browsers show a clear warning instead of offering an alternate file workflow.
 
 ## Development
 
@@ -43,8 +43,9 @@ Then open:
 The build writes the static app to:
 
 - `docs/index.html`
+- `docs/assets/novelist-*.js`
 
-Configure GitHub Pages to serve from the default branch’s `/docs` folder. The build preserves other files in `docs/`.
+Configure GitHub Pages to serve from the default branch's `/docs` folder. The build preserves other files in `docs/` and only refreshes generated files under `docs/assets/`.
 
 ## Testing
 

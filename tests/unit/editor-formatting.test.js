@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { EditorSelection, EditorState } from "@codemirror/state";
 import { createEditorManager, expandRangeToWord } from "../../src/editor.js";
 
@@ -15,24 +15,7 @@ function createManager() {
   return { parent, manager };
 }
 
-function setScrollMetrics(scrollDOM, { scrollTop, clientHeight, scrollHeight }) {
-  Object.defineProperty(scrollDOM, "scrollTop", {
-    configurable: true,
-    writable: true,
-    value: scrollTop,
-  });
-  Object.defineProperty(scrollDOM, "clientHeight", {
-    configurable: true,
-    value: clientHeight,
-  });
-  Object.defineProperty(scrollDOM, "scrollHeight", {
-    configurable: true,
-    value: scrollHeight,
-  });
-}
-
 afterEach(() => {
-  vi.useRealTimers();
   document.body.innerHTML = "";
 });
 
@@ -68,123 +51,25 @@ describe("editor inline formatting targeting", () => {
   });
 });
 
-describe("editor streaming autoscroll", () => {
-  it("enabling autoscroll snaps to the end without changing selection", () => {
+describe("editor markdown commands", () => {
+  it("applies heading and inline formatting commands", () => {
     const { manager } = createManager();
-    manager.setDocument("Alpha\nBeta\nGamma");
-    manager.view.dispatch({ selection: EditorSelection.cursor(2) });
-    setScrollMetrics(manager.view.scrollDOM, {
-      scrollTop: 0,
-      clientHeight: 120,
-      scrollHeight: 400,
-    });
-
-    const dispatchSpy = vi.spyOn(manager.view, "dispatch");
-    const selectionBefore = manager.getSelectionRange();
-
-    manager.enableStreamingAutoscroll();
-
-    expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({
-      effects: expect.anything(),
-    }));
-    expect(manager.getSelectionRange()).toEqual(selectionBefore);
+    manager.setDocument("Title");
+    manager.view.dispatch({ selection: EditorSelection.range(0, 5) });
+    manager.applyFormat("heading-1");
+    expect(manager.getText()).toBe("# Title");
+    manager.view.dispatch({ selection: EditorSelection.range(2, 7) });
+    manager.applyFormat("bold");
+    expect(manager.getText()).toBe("# **Title**");
     manager.destroy();
   });
 
-  it("appendText includes a scroll effect while autoscroll is enabled", () => {
+  it("replace all changes every match in the active document", () => {
     const { manager } = createManager();
-    manager.setDocument("Alpha");
-    setScrollMetrics(manager.view.scrollDOM, {
-      scrollTop: 0,
-      clientHeight: 120,
-      scrollHeight: 400,
-    });
-    manager.enableStreamingAutoscroll();
-
-    const dispatchSpy = vi.spyOn(manager.view, "dispatch");
-    manager.appendText(" Beta");
-
-    expect(dispatchSpy).toHaveBeenLastCalledWith(expect.objectContaining({
-      changes: { from: 5, insert: " Beta" },
-      effects: expect.anything(),
-    }));
-    manager.destroy();
-  });
-
-  it("scrolling away from the bottom disables autoscroll immediately", () => {
-    const { manager } = createManager();
-    manager.setDocument("Alpha");
-    setScrollMetrics(manager.view.scrollDOM, {
-      scrollTop: 280,
-      clientHeight: 120,
-      scrollHeight: 400,
-    });
-    manager.enableStreamingAutoscroll();
-
-    manager.view.scrollDOM.scrollTop = 200;
-    manager.view.scrollDOM.dispatchEvent(new Event("scroll"));
-
-    const dispatchSpy = vi.spyOn(manager.view, "dispatch");
-    manager.appendText(" Beta");
-
-    expect(dispatchSpy).toHaveBeenLastCalledWith(expect.not.objectContaining({
-      effects: expect.anything(),
-    }));
-    manager.destroy();
-  });
-
-  it("scrolling back to the bottom re-enables autoscroll", () => {
-    const { manager } = createManager();
-    manager.setDocument("Alpha");
-    setScrollMetrics(manager.view.scrollDOM, {
-      scrollTop: 280,
-      clientHeight: 120,
-      scrollHeight: 400,
-    });
-    manager.enableStreamingAutoscroll();
-
-    manager.view.scrollDOM.scrollTop = 200;
-    manager.view.scrollDOM.dispatchEvent(new Event("scroll"));
-    manager.view.scrollDOM.scrollTop = 280;
-    manager.view.scrollDOM.dispatchEvent(new Event("scroll"));
-
-    const dispatchSpy = vi.spyOn(manager.view, "dispatch");
-    manager.appendText(" Beta");
-
-    expect(dispatchSpy).toHaveBeenLastCalledWith(expect.objectContaining({
-      effects: expect.anything(),
-    }));
-    manager.destroy();
-  });
-
-  it("cancels any pending bottom snap when the user detaches before it runs", () => {
-    const { manager } = createManager();
-    manager.setDocument("Alpha");
-    setScrollMetrics(manager.view.scrollDOM, {
-      scrollTop: 280,
-      clientHeight: 120,
-      scrollHeight: 400,
-    });
-
-    const originalRequestAnimationFrame = globalThis.requestAnimationFrame;
-    const originalCancelAnimationFrame = globalThis.cancelAnimationFrame;
-    let pendingFrame = null;
-    globalThis.requestAnimationFrame = vi.fn((callback) => {
-      pendingFrame = callback;
-      return 1;
-    });
-    globalThis.cancelAnimationFrame = vi.fn(() => {
-      pendingFrame = null;
-    });
-
-    manager.enableStreamingAutoscroll();
-    manager.view.scrollDOM.scrollTop = 200;
-    manager.view.scrollDOM.dispatchEvent(new Event("scroll"));
-    pendingFrame?.(0);
-
-    expect(manager.view.scrollDOM.scrollTop).toBe(200);
-    globalThis.requestAnimationFrame = originalRequestAnimationFrame;
-    globalThis.cancelAnimationFrame = originalCancelAnimationFrame;
+    manager.setDocument("Alpha beta Alpha");
+    const query = manager.createSearchQuery("Alpha", { caseSensitive: true });
+    manager.replaceAllRanges(manager.findMatches(query), "Gamma");
+    expect(manager.getText()).toBe("Gamma beta Gamma");
     manager.destroy();
   });
 });

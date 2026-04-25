@@ -1,15 +1,22 @@
 import React from "react";
 
-import { FONT_OPTION_GROUPS, MENU_ACTION_SHORTCUTS, getShortcutLabel } from "../constants.js";
+import { FONT_OPTION_GROUPS, MENU_ACTION_SHORTCUTS, getShortcutLabel } from "../constants";
 
-export function normalizeShortcutKey(value) {
+type Shortcut = {
+  key?: string;
+  code?: string;
+  modifiers?: Array<"primary" | "alt" | "shift">;
+  platform?: "default" | "mac";
+};
+
+export function normalizeShortcutKey(value: string | undefined) {
   if (!value) {
     return "";
   }
   return value.length === 1 ? value.toLowerCase() : value;
 }
 
-export function matchesShortcut(event, shortcut) {
+export function matchesShortcut(event: KeyboardEvent, shortcut: Shortcut) {
   const isMac = /mac/i.test(navigator.userAgentData?.platform || navigator.platform || "");
   if (shortcut.platform === "mac" && !isMac) {
     return false;
@@ -26,7 +33,7 @@ export function matchesShortcut(event, shortcut) {
     && (!shortcut.key || normalizeShortcutKey(event.key) === normalizeShortcutKey(shortcut.key));
 }
 
-export function getShortcutAction(event) {
+export function getShortcutAction(event: KeyboardEvent) {
   for (const [action, shortcuts] of Object.entries(MENU_ACTION_SHORTCUTS)) {
     if (shortcuts.some((shortcut) => matchesShortcut(event, shortcut))) {
       return action;
@@ -35,7 +42,7 @@ export function getShortcutAction(event) {
   return null;
 }
 
-export function renderFontOptions(selectedValue) {
+export function renderFontOptions(selectedValue: string) {
   return FONT_OPTION_GROUPS.flatMap((group, groupIndex) => {
     const items = [];
     if (groupIndex > 0) {
@@ -52,27 +59,7 @@ export function renderFontOptions(selectedValue) {
   });
 }
 
-export function renderSelectOptions(options, selectedValue) {
-  return (options || []).map((option) => (
-    <md-select-option key={option.value} value={option.value} display-text={option.label} selected={option.value === selectedValue ? true : undefined}>
-      {option.label}
-    </md-select-option>
-  ));
-}
-
-export function saveBlob(options) {
-  const blob = options.blob instanceof Blob
-    ? options.blob
-    : new Blob([options.content ?? ""], { type: options.mimeType || "application/octet-stream" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = options.suggestedName;
-  anchor.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
-}
-
-export function formatTooltipLabel(label, action) {
+export function formatTooltipLabel(label: string, action?: string) {
   const shortcut = action ? getShortcutLabel(action) : "";
   return shortcut ? `${label} (${shortcut})` : label;
 }

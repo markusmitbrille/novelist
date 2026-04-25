@@ -4,7 +4,18 @@ export const NOVELIST_SETTINGS_KEY = "novelist:settings:v1";
 export const AUTOSAVE_DELAY_MS = 700;
 export const MENU_ORDER = ["file", "edit", "view", "insert", "format", "help"];
 
-export const FONT_OPTION_GROUPS = [
+export type FontOption = {
+  label: string;
+  value: string;
+};
+
+export type FontOptionGroup = {
+  id: string;
+  label: string;
+  options: FontOption[];
+};
+
+export const FONT_OPTION_GROUPS: FontOptionGroup[] = [
   {
     id: "system",
     label: "System Fonts",
@@ -30,7 +41,17 @@ export const FONT_OPTION_GROUPS = [
 
 export const FONT_OPTIONS = FONT_OPTION_GROUPS.flatMap((group) => group.options);
 
-const SHARED_ERROR_TOKENS = {
+type ThemeMode = "dark" | "light";
+type ThemeTokens = Record<string, string>;
+export type ThemePreset = {
+  id: string;
+  label: string;
+  mode: ThemeMode;
+  swatchColor: string;
+  tokens: ThemeTokens;
+};
+
+const SHARED_ERROR_TOKENS: ThemeTokens = {
   "--md-sys-color-error": "#ba1a1a",
   "--md-sys-color-on-error": "#ffffff",
   "--md-sys-color-error-container": "#ffdad6",
@@ -39,7 +60,7 @@ const SHARED_ERROR_TOKENS = {
   "--md-sys-color-scrim": "#000000",
 };
 
-export const THEME_PRESETS = {
+export const THEME_PRESETS: Record<string, ThemePreset> = {
   "ocean-dark": {
     id: "ocean-dark",
     label: "Ocean Dark",
@@ -125,11 +146,18 @@ export const DEFAULT_SETTINGS = {
   currentLineHighlight: false,
 };
 
-export function resolveThemePreset(themeId) {
-  return THEME_PRESETS[themeId] || THEME_PRESETS[DEFAULT_THEME_ID];
+export function resolveThemePreset(themeId: string | undefined | null) {
+  return themeId && THEME_PRESETS[themeId] ? THEME_PRESETS[themeId] : THEME_PRESETS[DEFAULT_THEME_ID];
 }
 
-export const MENU_ACTION_SHORTCUTS = {
+export type ShortcutDefinition = {
+  key?: string;
+  code?: string;
+  modifiers?: Array<"primary" | "alt" | "shift">;
+  platform?: "default" | "mac";
+};
+
+export const MENU_ACTION_SHORTCUTS: Record<string, ShortcutDefinition[]> = {
   new: [{ key: "n", modifiers: ["primary"] }],
   open: [{ key: "o", modifiers: ["primary"] }],
   save: [{ key: "s", modifiers: ["primary"] }],
@@ -165,7 +193,7 @@ export function isMacPlatform() {
   return /mac/i.test(platform);
 }
 
-function formatShortcutPart(part, mac) {
+function formatShortcutPart(part: string, mac: boolean) {
   if (part === "primary") {
     return mac ? "Cmd" : "Ctrl";
   }
@@ -178,7 +206,7 @@ function formatShortcutPart(part, mac) {
   return part;
 }
 
-function formatShortcutKey(shortcut) {
+function formatShortcutKey(shortcut: ShortcutDefinition) {
   if (shortcut.key === "F1") {
     return "F1";
   }
@@ -200,14 +228,14 @@ function formatShortcutKey(shortcut) {
   return String(shortcut.key || "").toUpperCase();
 }
 
-export function formatShortcutLabel(shortcut, options = {}) {
+export function formatShortcutLabel(shortcut: ShortcutDefinition, options: { mac?: boolean } = {}) {
   const mac = options.mac ?? isMacPlatform();
   const parts = (shortcut.modifiers || []).map((part) => formatShortcutPart(part, mac));
   parts.push(formatShortcutKey(shortcut));
   return parts.join("+");
 }
 
-export function getShortcutLabel(action, options = {}) {
+export function getShortcutLabel(action: string, options: { mac?: boolean } = {}) {
   const mac = options.mac ?? isMacPlatform();
   const shortcuts = (MENU_ACTION_SHORTCUTS[action] || []).filter((shortcut) => {
     if (!shortcut.platform) {

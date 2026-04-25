@@ -4,7 +4,7 @@ import { icon } from "../head-assets";
 import { formatTooltipLabel } from "../ui";
 
 const QUICK_ACTIONS = ["undo", "redo"];
-const FORMAT_ACTIONS = [
+const FORMAT_ACTIONS: Array<[string, string, string]> = [
   ["heading-1", "format_h1", "Heading 1"],
   ["heading-2", "format_h2", "Heading 2"],
   ["heading-3", "format_h3", "Heading 3"],
@@ -18,11 +18,16 @@ const FORMAT_ACTIONS = [
 
 const TOGGLE_ACTIONS = new Set(["heading-1", "heading-2", "heading-3", "bold", "italic", "bullet", "quote"]);
 
-function actionTooltip(label, action) {
+type FormatBarProps = {
+  activeFormats: Record<string, boolean>;
+  onMenuAction: (action: string) => void | Promise<void>;
+};
+
+function actionTooltip(label: string, action: string) {
   return formatTooltipLabel(label, action);
 }
 
-export function FormatBar(props) {
+export function FormatBar(props: FormatBarProps) {
   const { activeFormats, onMenuAction } = props;
 
   return (

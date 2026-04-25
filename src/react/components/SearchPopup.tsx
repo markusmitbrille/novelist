@@ -2,8 +2,22 @@ import React from "react";
 
 import { icon } from "../head-assets";
 import { MdOutlinedTextField } from "../md3";
+import type { MaterialTextFieldElement } from "../material-types";
+import type { SearchState } from "../types";
 
-export function SearchPopup(props) {
+type SearchPopupProps = {
+  search: SearchState;
+  searchQueryRef: React.MutableRefObject<MaterialTextFieldElement | null>;
+  onSearchQueryInput: (value: string) => void;
+  onSearchReplacementInput: (value: string) => void;
+  onGoToAdjacentSearchMatch: (direction: number) => void;
+  onSearchMatchCaseToggle: () => void;
+  onCloseSearchPopup: () => void;
+  onReplaceCurrentSearchMatch: () => void;
+  onReplaceAllSearchMatches: () => void;
+};
+
+export function SearchPopup(props: SearchPopupProps) {
   const {
     search,
     searchQueryRef,

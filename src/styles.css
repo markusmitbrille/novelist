@@ -1,5 +1,4 @@
-export function getAppStyles() {
-  return String.raw`
+﻿
 :root {
   color-scheme: dark;
   --editor-font-family: 'Times New Roman', Times, serif;
@@ -481,5 +480,4 @@ body::before {
     grid-column: 1 / -1;
   }
 }
-`;
-}
+
