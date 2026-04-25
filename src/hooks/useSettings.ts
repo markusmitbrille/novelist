@@ -7,9 +7,16 @@ import { normalizeSettings } from "../text";
 
 function loadStoredSettings(): NovelistSettings {
   try {
-    return normalizeSettings(JSON.parse(localStorage.getItem(NOVELIST_SETTINGS_KEY) || "null"));
+    const storedSettings = JSON.parse(localStorage.getItem(NOVELIST_SETTINGS_KEY) || "null");
+    const normalizedSettings = normalizeSettings(storedSettings);
+    if (JSON.stringify(storedSettings) !== JSON.stringify(normalizedSettings)) {
+      storeSettings(normalizedSettings);
+    }
+    return normalizedSettings;
   } catch {
-    return { ...DEFAULT_SETTINGS };
+    const defaultSettings = { ...DEFAULT_SETTINGS };
+    storeSettings(defaultSettings);
+    return defaultSettings;
   }
 }
 

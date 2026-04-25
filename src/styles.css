@@ -3,7 +3,6 @@
   color-scheme: dark;
   --editor-font-family: 'Times New Roman', Times, serif;
   --editor-font-size: 19px;
-  --editor-background-image: none;
   --app-bg: var(--md-sys-color-surface);
   --app-bg-strong: var(--md-sys-color-surface-container-low);
   --shell-surface: color-mix(in srgb, var(--md-sys-color-surface-container-low) 90%, transparent);
@@ -75,17 +74,6 @@ body {
     radial-gradient(circle at top, color-mix(in srgb, var(--md-sys-color-primary-container) 16%, transparent), transparent 32%),
     linear-gradient(180deg, var(--app-bg), var(--app-bg-strong));
   color: var(--text-main);
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-image: var(--editor-background-image);
-  background-size: cover;
-  background-position: center;
-  opacity: 0.1;
-  pointer-events: none;
 }
 
 .material-symbols-rounded {
@@ -374,21 +362,24 @@ body::before {
 .settings-grid {
   display: grid;
   gap: 1rem;
-  width: min(720px, calc(100vw - 96px));
+  width: min(100%, 400px);
   min-width: 0;
+  max-width: 400px;
+  margin-inline: auto;
   padding-top: 0.2rem;
 }
 
 #settingsDialog {
-  min-width: min(760px, calc(100vw - 48px));
-  max-width: min(760px, calc(100vw - 48px));
+  width: min(464px, calc(100vw - 48px));
+  min-width: 0;
+  max-width: min(464px, calc(100vw - 48px));
   max-height: min(820px, calc(100vh - 48px));
 }
 
 #settingsDialog [slot="content"] {
+  width: 100%;
   min-width: 0;
   overflow: auto;
-  padding-inline-end: 0.25rem;
 }
 
 .settings-grid md-outlined-select,
@@ -438,6 +429,8 @@ body::before {
 .theme-picker {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
+  max-width: 100%;
   gap: 1px;
   padding: 1px;
   border-radius: 26px;
@@ -447,8 +440,9 @@ body::before {
 }
 
 .theme-picker__cell {
+  height: 68px;
   min-width: 0;
-  padding: 0.8rem 0.55rem;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -725,7 +719,13 @@ body::before {
     grid-column: 1 / -1;
   }
 
-  #settingsDialog,
+  #settingsDialog {
+    width: min(calc(100vw - 24px), 464px);
+    min-width: 0;
+    max-width: min(calc(100vw - 24px), 464px);
+    max-height: calc(100vh - 24px);
+  }
+
   #wordCountDialog {
     min-width: min(calc(100vw - 24px), 688px);
     max-width: min(calc(100vw - 24px), 688px);
@@ -735,10 +735,7 @@ body::before {
   .settings-grid,
   .word-count-dialog {
     width: min(100%, calc(100vw - 48px));
-  }
-
-  .theme-picker {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
   }
 
   .word-count-dialog__row {
@@ -749,6 +746,12 @@ body::before {
 
   .word-count-dialog__value {
     white-space: normal;
+  }
+}
+
+@media (max-width: 420px) {
+  .theme-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

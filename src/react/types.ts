@@ -2,8 +2,7 @@ export type NovelistSettings = {
   theme: string;
   fontFamily: string;
   fontSize: number;
-  backgroundImage: string;
-  currentLineHighlight: boolean;
+  autosaveEnabled: boolean;
 };
 
 export type EditorActiveFormats = Record<string, boolean>;

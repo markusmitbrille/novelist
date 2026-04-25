@@ -1,4 +1,4 @@
-import { useReducer, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 
 import { AUTOSAVE_DELAY_MS, DEFAULT_DOCUMENT_TITLE } from "../constants";
 import {
@@ -23,8 +23,8 @@ export type DocumentSessionState = {
 };
 
 type DocumentSessionAction =
-  | { type: "edit-text"; text: string }
-  | { type: "set-title"; title: string }
+  | { type: "edit-text"; text: string; autosaveEnabled: boolean }
+  | { type: "set-title"; title: string; autosaveEnabled: boolean }
   | { type: "load-file"; file: OpenedMarkdownFile }
   | { type: "new-document" }
   | { type: "saving" }
@@ -53,14 +53,14 @@ function documentSessionReducer(state: DocumentSessionState, action: DocumentSes
         text: action.text,
         revision: state.revision + 1,
         isDirty,
-        saveStatus: isDirty ? (state.fileHandle ? "Autosaving..." : "Unsaved changes.") : "Saved.",
+        saveStatus: isDirty ? (state.fileHandle && action.autosaveEnabled ? "Autosaving..." : "Unsaved changes.") : "Saved.",
       };
     case "set-title":
       return {
         ...state,
         title: normalizeDocumentTitle(action.title),
         isDirty: true,
-        saveStatus: state.fileHandle ? "Autosaving..." : "Unsaved changes.",
+        saveStatus: state.fileHandle && action.autosaveEnabled ? "Autosaving..." : "Unsaved changes.",
       };
     case "load-file":
       return {
@@ -106,14 +106,16 @@ function documentSessionReducer(state: DocumentSessionState, action: DocumentSes
   }
 }
 
-export function useDocumentSession() {
+export function useDocumentSession(autosaveEnabled = true) {
   const [state, dispatch] = useReducer(documentSessionReducer, INITIAL_DOCUMENT_SESSION);
   const stateRef = useRef(INITIAL_DOCUMENT_SESSION);
+  const autosaveEnabledRef = useRef(autosaveEnabled);
   const saveTimerRef = useRef<number | null>(null);
   const pendingReplacementRef = useRef<(() => Promise<void>) | null>(null);
   const [dirtyDialogOpen, setDirtyDialogOpen] = useState(false);
 
   stateRef.current = state;
+  autosaveEnabledRef.current = autosaveEnabled;
 
   function clearAutosave() {
     if (saveTimerRef.current) {
@@ -153,7 +155,7 @@ export function useDocumentSession() {
 
   function scheduleAutosave(text: string, handle = stateRef.current.fileHandle) {
     clearAutosave();
-    if (!handle) {
+    if (!handle || !autosaveEnabledRef.current) {
       return;
     }
     saveTimerRef.current = window.setTimeout(() => {
@@ -166,8 +168,8 @@ export function useDocumentSession() {
   }
 
   function setText(text: string) {
-    dispatch({ type: "edit-text", text });
-    if (text !== stateRef.current.lastSavedText) {
+    dispatch({ type: "edit-text", text, autosaveEnabled: autosaveEnabledRef.current });
+    if (text !== stateRef.current.lastSavedText && autosaveEnabledRef.current) {
       scheduleAutosave(text);
     } else {
       clearAutosave();
@@ -175,8 +177,14 @@ export function useDocumentSession() {
   }
 
   function setTitle(title: string) {
-    dispatch({ type: "set-title", title });
+    dispatch({ type: "set-title", title, autosaveEnabled: autosaveEnabledRef.current });
   }
+
+  useEffect(() => {
+    if (!autosaveEnabled) {
+      clearAutosave();
+    }
+  }, [autosaveEnabled]);
 
   async function replaceWithNewDocument() {
     clearAutosave();

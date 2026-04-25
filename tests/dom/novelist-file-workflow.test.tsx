@@ -107,6 +107,70 @@ describe("Novelist file workflow", () => {
     await waitFor(() => expect(writes.at(-1)).toBe("Autosaved text."));
   });
 
+  it("does not autosave when autosave is disabled", async () => {
+    const { writes } = installFileSystemMocks();
+    localStorage.setItem("novelist:settings:v1", JSON.stringify({ autosaveEnabled: false }));
+    render(<App />);
+
+    await act(async () => {
+      fireEvent.click(document.querySelector('[data-menu-action="open"]') as Element);
+    });
+    await waitFor(() => expect(window.__NOVELIST_TEST_API__?.getState().fileName).toBe("chapter.md"));
+
+    vi.useFakeTimers();
+    await act(async () => {
+      window.__NOVELIST_TEST_API__?.setText?.("Autosave disabled text.");
+      vi.advanceTimersByTime(700);
+    });
+    vi.useRealTimers();
+
+    expect(writes).toEqual([]);
+    expect(window.__NOVELIST_TEST_API__?.getState().isDirty).toBe(true);
+  });
+
+  it("saves manually when autosave is disabled", async () => {
+    const { writes } = installFileSystemMocks();
+    localStorage.setItem("novelist:settings:v1", JSON.stringify({ autosaveEnabled: false }));
+    render(<App />);
+
+    await act(async () => {
+      fireEvent.click(document.querySelector('[data-menu-action="open"]') as Element);
+    });
+    await waitFor(() => expect(window.__NOVELIST_TEST_API__?.getState().fileName).toBe("chapter.md"));
+
+    act(() => {
+      window.__NOVELIST_TEST_API__?.setText?.("Manual save still works.");
+    });
+    await act(async () => {
+      fireEvent.click(document.querySelector('[data-menu-action="save"]') as Element);
+    });
+
+    expect(writes.at(-1)).toBe("Manual save still works.");
+    expect(window.__NOVELIST_TEST_API__?.getState().isDirty).toBe(false);
+  });
+
+  it("prunes removed settings when loading stored settings", () => {
+    installFileSystemMocks();
+    localStorage.setItem("novelist:settings:v1", JSON.stringify({
+      theme: "ocean-dark",
+      fontFamily: "'Times New Roman', Times, serif",
+      fontSize: 19,
+      backgroundImage: "https://example.com/image.jpg",
+      currentLineHighlight: true,
+      autosaveEnabled: false,
+    }));
+
+    render(<App />);
+
+    const storedSettings = JSON.parse(localStorage.getItem("novelist:settings:v1") || "{}");
+    expect(storedSettings).toEqual({
+      theme: "ocean-dark",
+      fontFamily: "'Times New Roman', Times, serif",
+      fontSize: 19,
+      autosaveEnabled: false,
+    });
+  });
+
   it("keeps repeated dirty edits reflected in status-derived UI", async () => {
     installFileSystemMocks();
     render(<App />);

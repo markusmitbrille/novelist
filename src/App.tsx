@@ -21,8 +21,8 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [wordCountOpen, setWordCountOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const documentSession = useDocumentSession();
   const { settings, updateSettings } = useSettings();
+  const documentSession = useDocumentSession(settings.autosaveEnabled);
   const syncSearchRef = useRef<() => void>(() => {});
   const editorBridge = useEditorBridge({
     isSupported,

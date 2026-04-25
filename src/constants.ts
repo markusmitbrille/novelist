@@ -377,8 +377,7 @@ export const DEFAULT_SETTINGS = {
   theme: DEFAULT_THEME_ID,
   fontFamily: FONT_OPTIONS[0].value,
   fontSize: 19,
-  backgroundImage: "",
-  currentLineHighlight: false,
+  autosaveEnabled: true,
 };
 
 export function resolveThemePreset(themeId: string | undefined | null) {

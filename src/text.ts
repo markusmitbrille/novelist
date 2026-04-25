@@ -31,16 +31,13 @@ export function normalizeDocumentTitle(value: string) {
 
 export function normalizeSettings(settings: Partial<NovelistSettings> | null | undefined): NovelistSettings {
   return {
-    ...DEFAULT_SETTINGS,
-    ...(settings || {}),
     fontSize: Number.isFinite(settings?.fontSize)
       ? Math.max(12, Math.min(32, Number(settings?.fontSize)))
       : DEFAULT_SETTINGS.fontSize,
-    currentLineHighlight: settings?.currentLineHighlight === true,
-    backgroundImage: String(settings?.backgroundImage || ""),
     fontFamily: FONT_OPTIONS.some((option) => option.value === settings?.fontFamily)
       ? String(settings?.fontFamily)
       : DEFAULT_SETTINGS.fontFamily,
     theme: settings?.theme && THEME_PRESETS[settings.theme] ? String(settings.theme) : DEFAULT_SETTINGS.theme,
+    autosaveEnabled: settings?.autosaveEnabled !== false,
   };
 }

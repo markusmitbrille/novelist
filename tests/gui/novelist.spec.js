@@ -135,15 +135,54 @@ test.describe("Novelist", () => {
     await expect(page.locator("#settingsThemePicker")).toBeVisible();
     await expect(page.locator("[data-theme-choice]")).toHaveCount(8);
     await expect(page.locator(".theme-swatch.is-selected")).toHaveCount(1);
+    await expect(page.locator("#settingsBackgroundImage")).toHaveCount(0);
+    await expect(page.locator("#settingsCurrentLineHighlight")).toHaveCount(0);
+    await expect(page.locator("#settingsAutosaveEnabled")).toBeVisible();
 
     const overflow = await page.locator("#settingsDialog [slot='content']").evaluate((element) => ({
       scrollWidth: element.scrollWidth,
       clientWidth: element.clientWidth,
     }));
     expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1);
+    await expect.poll(async () => page.locator("#settingsDialog").evaluate((element) => element.getBoundingClientRect().width)).toBeLessThanOrEqual(500);
+    const layout = await page.locator("#settingsDialog").evaluate((dialog) => {
+      const content = dialog.querySelector("[slot='content']");
+      const grid = dialog.querySelector(".settings-grid");
+      const picker = dialog.querySelector("#settingsThemePicker");
+      const controls = [
+        dialog.querySelector("#settingsFontFamily"),
+        dialog.querySelector("#settingsFontSize"),
+        dialog.querySelector(".settings-checkbox-row"),
+        picker,
+      ].filter(Boolean);
+      const contentRect = content.getBoundingClientRect();
+      const gridRect = grid.getBoundingClientRect();
+      const pickerRect = picker.getBoundingClientRect();
+      return {
+        contentLeft: contentRect.left,
+        contentRight: contentRect.right,
+        gridWidth: gridRect.width,
+        pickerWidth: pickerRect.width,
+        controlBounds: controls.map((control) => {
+          const rect = control.getBoundingClientRect();
+          return { left: rect.left, right: rect.right };
+        }),
+      };
+    });
+    expect(layout.gridWidth).toBeLessThanOrEqual(layout.contentRight - layout.contentLeft + 1);
+    expect(layout.gridWidth).toBeLessThanOrEqual(410);
+    expect(layout.pickerWidth).toBeGreaterThanOrEqual(layout.gridWidth - 1);
+    expect(layout.pickerWidth).toBeLessThanOrEqual(layout.gridWidth + 1);
+    for (const bounds of layout.controlBounds) {
+      expect(bounds.left).toBeGreaterThanOrEqual(layout.contentLeft - 1);
+      expect(bounds.right).toBeLessThanOrEqual(layout.contentRight + 1);
+    }
 
     await page.locator('[data-theme-choice="sage-light"]').click();
     await expect.poll(async () => page.evaluate(() => document.documentElement.dataset.theme)).toBe("sage-light");
+
+    await page.locator("#settingsAutosaveEnabled").click();
+    await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem("novelist:settings:v1")).autosaveEnabled)).toBe(false);
   });
 
   test("word count dialog opens with document stats", async ({ page }) => {

@@ -25,11 +25,11 @@ export function SettingsDialog({ open, settings, onClose, onUpdate }: SettingsDi
             {renderFontOptions(settings.fontFamily)}
           </MdOutlinedSelect>
           <MdOutlinedTextField id="settingsFontSize" label="Font size" type="number" value={String(settings.fontSize)} onChangeValue={(value) => onUpdate((draft) => ({ ...draft, fontSize: Number(value || draft.fontSize) }))} />
-          <label className="settings-checkbox-row" htmlFor="settingsCurrentLineHighlight">
-            <MdCheckbox id="settingsCurrentLineHighlight" checked={settings.currentLineHighlight === true} onChangeChecked={(checked) => onUpdate((draft) => ({ ...draft, currentLineHighlight: checked }))} />
+          <label className="settings-checkbox-row" htmlFor="settingsAutosaveEnabled">
+            <MdCheckbox id="settingsAutosaveEnabled" checked={settings.autosaveEnabled !== false} onChangeChecked={(checked) => onUpdate((draft) => ({ ...draft, autosaveEnabled: checked }))} />
             <span className="settings-checkbox-row__text">
-              <span className="settings-checkbox-row__label">Highlight current line</span>
-              <span className="settings-checkbox-row__supporting">Show the subtle current-line tint in the editor.</span>
+              <span className="settings-checkbox-row__label">Autosave</span>
+              <span className="settings-checkbox-row__supporting">Save opened files automatically after edits.</span>
             </span>
           </label>
           <div className="settings-theme-field">
@@ -68,7 +68,6 @@ export function SettingsDialog({ open, settings, onClose, onUpdate }: SettingsDi
               }))}
             </div>
           </div>
-          <MdOutlinedTextField id="settingsBackgroundImage" label="Background image URL" type="url" value={settings.backgroundImage || ""} onChangeValue={(value) => onUpdate((draft) => ({ ...draft, backgroundImage: value.trim() }))} />
         </div>
       </div>
       <div slot="actions"><md-text-button onClick={onClose}>Close</md-text-button></div>
