@@ -161,6 +161,7 @@ test.describe("Novelist", () => {
     await expect(page.locator("#settingsCurrentLineHighlight")).toHaveCount(0);
     await expect(page.locator("#settingsAutosaveEnabled")).toBeVisible();
     await expect(page.locator("#settingsTypewriterMode")).toBeVisible();
+    await expect(page.locator("#settingsFontFamily")).toBeVisible();
 
     const overflow = await page.locator("#settingsDialog [slot='content']").evaluate((element) => ({
       scrollWidth: element.scrollWidth,
@@ -200,6 +201,8 @@ test.describe("Novelist", () => {
       expect(bounds.left).toBeGreaterThanOrEqual(layout.contentLeft - 1);
       expect(bounds.right).toBeLessThanOrEqual(layout.contentRight + 1);
     }
+
+    await expect.poll(async () => page.locator("#settingsFontFamily").evaluate((select) => select.value)).toBe("'Noto Sans', Arial, sans-serif");
 
     await page.locator('[data-theme-choice="sage-light"]').click();
     await expect.poll(async () => page.evaluate(() => document.documentElement.dataset.theme)).toBe("sage-light");

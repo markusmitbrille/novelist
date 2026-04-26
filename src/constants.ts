@@ -17,6 +17,14 @@ export type FontOptionGroup = {
 
 export const FONT_OPTION_GROUPS: FontOptionGroup[] = [
   {
+    id: "featured",
+    label: "Featured Fonts",
+    options: [
+      { label: "Noto Sans", value: "'Noto Sans', Arial, sans-serif" },
+      { label: "Noto Serif", value: "'Noto Serif', Georgia, serif" },
+    ],
+  },
+  {
     id: "system",
     label: "System Fonts",
     options: [
@@ -375,7 +383,7 @@ export const THEME_PICKER_ROWS = [
 ];
 export const DEFAULT_SETTINGS = {
   theme: DEFAULT_THEME_ID,
-  fontFamily: FONT_OPTIONS[0].value,
+  fontFamily: "'Noto Sans', Arial, sans-serif",
   fontSize: 19,
   autosaveEnabled: true,
   typewriterMode: false,

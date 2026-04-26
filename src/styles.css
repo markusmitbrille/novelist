@@ -1,7 +1,7 @@
 ﻿
 :root {
   color-scheme: dark;
-  --editor-font-family: 'Times New Roman', Times, serif;
+  --editor-font-family: 'Noto Sans', Arial, sans-serif;
   --editor-font-size: 19px;
   --app-bg: var(--md-sys-color-surface);
   --app-bg-strong: var(--md-sys-color-surface-container-low);

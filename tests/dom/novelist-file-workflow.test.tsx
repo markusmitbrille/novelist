@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import App from "../../src/App";
+import { renderFontOptions } from "../../src/react/ui";
 
 function installFileSystemMocks() {
   const writes: string[] = [];
@@ -182,6 +183,65 @@ describe("Novelist file workflow", () => {
       autosaveEnabled: false,
       typewriterMode: false,
     });
+  });
+
+  it("defaults missing font settings to Noto Sans and rewrites storage", () => {
+    installFileSystemMocks();
+    localStorage.setItem("novelist:settings:v1", JSON.stringify({
+      theme: "ocean-dark",
+      fontSize: 19,
+      autosaveEnabled: true,
+    }));
+
+    render(<App />);
+
+    const storedSettings = JSON.parse(localStorage.getItem("novelist:settings:v1") || "{}");
+    expect(storedSettings).toEqual({
+      theme: "ocean-dark",
+      fontFamily: "'Noto Sans', Arial, sans-serif",
+      fontSize: 19,
+      autosaveEnabled: true,
+      typewriterMode: false,
+    });
+    expect(document.documentElement.style.getPropertyValue("--editor-font-family")).toBe("'Noto Sans', Arial, sans-serif");
+  });
+
+  it("preserves an explicitly stored font family", () => {
+    installFileSystemMocks();
+    localStorage.setItem("novelist:settings:v1", JSON.stringify({
+      theme: "ocean-dark",
+      fontFamily: "'Noto Serif', Georgia, serif",
+      fontSize: 19,
+      autosaveEnabled: true,
+    }));
+
+    render(<App />);
+
+    const storedSettings = JSON.parse(localStorage.getItem("novelist:settings:v1") || "{}");
+    expect(storedSettings).toEqual({
+      theme: "ocean-dark",
+      fontFamily: "'Noto Serif', Georgia, serif",
+      fontSize: 19,
+      autosaveEnabled: true,
+      typewriterMode: false,
+    });
+    expect(document.documentElement.style.getPropertyValue("--editor-font-family")).toBe("'Noto Serif', Georgia, serif");
+  });
+
+  it("renders Noto font options first with a divider before the legacy list", () => {
+    render(<div data-testid="font-options">{renderFontOptions("'Noto Sans', Arial, sans-serif")}</div>);
+
+    const children = Array.from(screen.getByTestId("font-options").children).map((element) => ({
+      tag: element.tagName.toLowerCase(),
+      text: element.textContent?.trim() || "",
+    }));
+
+    expect(children.slice(0, 4)).toEqual([
+      { tag: "md-select-option", text: "Noto Sans" },
+      { tag: "md-select-option", text: "Noto Serif" },
+      { tag: "md-divider", text: "" },
+      { tag: "md-select-option", text: "Times New Roman" },
+    ]);
   });
 
   it("renders status without obsolete title or caret offset UI", () => {
