@@ -378,6 +378,7 @@ export const DEFAULT_SETTINGS = {
   fontFamily: FONT_OPTIONS[0].value,
   fontSize: 19,
   autosaveEnabled: true,
+  typewriterMode: false,
 };
 
 export function resolveThemePreset(themeId: string | undefined | null) {
@@ -392,7 +393,7 @@ export type ShortcutDefinition = {
 };
 
 export const MENU_ACTION_SHORTCUTS: Record<string, ShortcutDefinition[]> = {
-  new: [{ key: "n", modifiers: ["primary"] }],
+  new: [{ key: "n", modifiers: ["primary", "alt"] }],
   open: [{ key: "o", modifiers: ["primary"] }],
   save: [{ key: "s", modifiers: ["primary"] }],
   "save-as": [{ key: "s", modifiers: ["primary", "shift"] }],
@@ -406,8 +407,6 @@ export const MENU_ACTION_SHORTCUTS: Record<string, ShortcutDefinition[]> = {
     { key: "h", modifiers: ["primary"], platform: "default" },
     { key: "h", modifiers: ["primary", "shift"], platform: "mac" },
   ],
-  settings: [{ code: "Comma", key: ",", modifiers: ["primary"] }],
-  divider: [{ code: "Minus", key: "-", modifiers: ["primary", "shift"] }],
   link: [{ key: "k", modifiers: ["primary"] }],
   image: [{ key: "i", modifiers: ["primary", "shift"] }],
   "heading-1": [{ key: "1", modifiers: ["primary", "alt"] }],
@@ -415,8 +414,6 @@ export const MENU_ACTION_SHORTCUTS: Record<string, ShortcutDefinition[]> = {
   "heading-3": [{ key: "3", modifiers: ["primary", "alt"] }],
   bold: [{ key: "b", modifiers: ["primary"] }],
   italic: [{ key: "i", modifiers: ["primary"] }],
-  bullet: [{ code: "Digit8", key: "8", modifiers: ["primary", "shift"] }],
-  quote: [{ code: "Period", key: ".", modifiers: ["primary", "shift"] }],
 };
 
 export function isMacPlatform() {

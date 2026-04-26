@@ -7,10 +7,11 @@ export function useEditorBridge(options: {
   isSupported: boolean;
   documentText: string;
   documentRevision: number;
+  typewriterMode?: boolean;
   onTextChange: (text: string) => void;
   onEditorActivity?: () => void;
 }) {
-  const { isSupported, documentText, documentRevision, onTextChange, onEditorActivity = () => {} } = options;
+  const { isSupported, documentText, documentRevision, typewriterMode = false, onTextChange, onEditorActivity = () => {} } = options;
   const editorMountRef = useRef<HTMLDivElement | null>(null);
   const editorRef = useRef<EditorManager | null>(null);
   const lastAppliedRevisionRef = useRef(-1);
@@ -76,10 +77,19 @@ export function useEditorBridge(options: {
     syncActiveFormats();
   }
 
+  function insertTextAtSelection(text: string) {
+    editorRef.current?.insertTextAtSelection(text);
+    syncEditorUiState();
+  }
+
   function rebuildEditor() {
     editorRef.current?.rebuildFromCurrentText();
     syncEditorUiState();
   }
+
+  useEffect(() => {
+    editorRef.current?.setTypewriterMode(typewriterMode);
+  }, [typewriterMode]);
 
   return {
     editorMountRef,
@@ -87,6 +97,7 @@ export function useEditorBridge(options: {
     activeFormats,
     caret,
     applyEditorAction,
+    insertTextAtSelection,
     rebuildEditor,
     syncEditorUiState,
   };

@@ -5,7 +5,8 @@ import { bracketMatching, defaultHighlightStyle, foldGutter, foldKeymap, Highlig
 import { lintKeymap } from "@codemirror/lint";
 import { EditorSelection, EditorState, RangeSetBuilder, StateEffect, StateField } from "@codemirror/state";
 import { Decoration, drawSelection, dropCursor, EditorView, highlightActiveLine, highlightActiveLineGutter, highlightSpecialChars, keymap, lineNumbers, rectangularSelection, crosshairCursor } from "@codemirror/view";
-import { search, SearchCursor, searchKeymap, SearchQuery } from "@codemirror/search";
+import { SearchCursor, SearchQuery } from "@codemirror/search";
+import { GFM } from "@lezer/markdown";
 import { tags } from "@lezer/highlight";
 
 const markdownHighlightStyle = HighlightStyle.define([
@@ -90,8 +91,8 @@ function createEditorTheme() {
       fontFamily: "var(--editor-font-family)",
     },
     ".cm-line": {
-      paddingLeft: "4.4rem",
-      paddingRight: "2.9rem",
+      paddingLeft: "3.65rem",
+      paddingRight: "3.65rem",
     },
     ".cm-activeLine": {
       background: "var(--cm-active-line)",
@@ -131,6 +132,10 @@ function getSelectedLines(state, range = state.selection.main) {
 
 function lineStartsWithPrefix(line, prefix) {
   return line.text.startsWith(prefix);
+}
+
+function lineStartsWithPattern(line, pattern) {
+  return pattern.test(line.text);
 }
 
 function lineHeadingLevel(line) {
@@ -179,7 +184,11 @@ function getActiveFormats(state) {
     "heading-3": allSelectedLinesMatch(state, (line) => lineHeadingLevel(line) === 3, range),
     bold: rangeInsideInlineFormat(state, range, "StrongEmphasis", 2),
     italic: rangeInsideInlineFormat(state, range, "Emphasis", 1),
+    strikethrough: rangeInsideInlineFormat(state, range, "Strikethrough", 2),
+    "inline-code": rangeInsideInlineFormat(state, range, "InlineCode", 1),
     bullet: allSelectedLinesMatch(state, (line) => lineStartsWithPrefix(line, "- "), range),
+    ordered: allSelectedLinesMatch(state, (line) => lineStartsWithPattern(line, /^\d+\.\s+/), range),
+    task: allSelectedLinesMatch(state, (line) => lineStartsWithPattern(line, /^- \[[ xX]\]\s+/), range),
     quote: allSelectedLinesMatch(state, (line) => lineStartsWithPrefix(line, "> "), range),
   };
 }
@@ -197,7 +206,7 @@ export function expandRangeToWord(state, range) {
   return EditorSelection.range(word.from, word.to);
 }
 
-function createState(docText, onDocChange, onSelectionChange) {
+function createState(docText, onDocChange, onSelectionChange, options = {}) {
   return EditorState.create({
     doc: docText,
     extensions: [
@@ -217,13 +226,11 @@ function createState(docText, onDocChange, onSelectionChange) {
       rectangularSelection(),
       crosshairCursor(),
       highlightActiveLine(),
-      search({}),
-      markdown(),
+      markdown({ extensions: [GFM] }),
       keymap.of([
         indentWithTab,
         ...closeBracketsKeymap,
         ...defaultKeymap,
-        ...searchKeymap,
         ...historyKeymap,
         ...foldKeymap,
         ...completionKeymap,
@@ -236,6 +243,11 @@ function createState(docText, onDocChange, onSelectionChange) {
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           onDocChange(update.state.doc.toString(), update.state);
+          if (options.typewriterMode) {
+            update.view.dispatch({
+              effects: EditorView.scrollIntoView(update.state.selection.main.head, { y: "center" }),
+            });
+          }
         }
         if (update.docChanged || update.selectionSet) {
           onSelectionChange(update.state);
@@ -306,14 +318,45 @@ function toggleLinePrefix(view, prefix) {
   const lines = getSelectedLines(view.state);
   const allActive = lines.every((line) => lineStartsWithPrefix(line, prefix));
   const changes = [];
+  let nextCursor = null;
   for (const line of lines) {
     if (allActive) {
       changes.push({ from: line.from, to: line.from + prefix.length });
     } else if (!lineStartsWithPrefix(line, prefix)) {
       changes.push({ from: line.from, insert: prefix });
+      if (view.state.selection.main.empty && line.from <= view.state.selection.main.head && view.state.selection.main.head <= line.to) {
+        nextCursor = line.from + prefix.length;
+      }
     }
   }
-  view.dispatch({ changes });
+  view.dispatch({
+    changes,
+    selection: nextCursor == null ? undefined : EditorSelection.cursor(nextCursor),
+  });
+  view.focus();
+}
+
+function toggleLinePattern(view, pattern, createPrefix) {
+  const lines = getSelectedLines(view.state);
+  const allActive = lines.every((line) => pattern.test(line.text));
+  const changes = [];
+  let nextCursor = null;
+  lines.forEach((line, index) => {
+    const match = pattern.exec(line.text);
+    if (allActive && match) {
+      changes.push({ from: line.from, to: line.from + match[0].length });
+    } else if (!match) {
+      const prefix = createPrefix(index, line);
+      changes.push({ from: line.from, insert: prefix });
+      if (view.state.selection.main.empty && line.from <= view.state.selection.main.head && view.state.selection.main.head <= line.to) {
+        nextCursor = line.from + prefix.length;
+      }
+    }
+  });
+  view.dispatch({
+    changes,
+    selection: nextCursor == null ? undefined : EditorSelection.cursor(nextCursor),
+  });
   view.focus();
 }
 
@@ -322,6 +365,7 @@ function toggleHeading(view, level) {
   const lines = getSelectedLines(view.state);
   const allActive = lines.every((line) => lineHeadingLevel(line) === level);
   const changes = [];
+  let nextCursor = null;
   for (const line of lines) {
     const currentLevel = lineHeadingLevel(line);
     if (currentLevel > 0) {
@@ -329,9 +373,15 @@ function toggleHeading(view, level) {
     }
     if (!allActive) {
       changes.push({ from: line.from, insert: prefix });
+      if (view.state.selection.main.empty && line.from <= view.state.selection.main.head && view.state.selection.main.head <= line.to) {
+        nextCursor = line.from + prefix.length;
+      }
     }
   }
-  view.dispatch({ changes });
+  view.dispatch({
+    changes,
+    selection: nextCursor == null ? undefined : EditorSelection.cursor(nextCursor),
+  });
   view.focus();
 }
 
@@ -353,10 +403,45 @@ function insertDivider(view) {
   view.focus();
 }
 
+function insertBlock(view, text, cursorOffset = text.length) {
+  const { from, to } = view.state.selection.main;
+  const before = view.state.sliceDoc(0, from);
+  const after = view.state.sliceDoc(to);
+  const prefix = before.length === 0 || before.endsWith("\n\n") ? "" : before.endsWith("\n") ? "\n" : "\n\n";
+  const suffix = after.length === 0 || after.startsWith("\n\n") ? "" : after.startsWith("\n") ? "\n" : "\n\n";
+  const insertText = `${prefix}${text}${suffix}`;
+  const start = from + prefix.length;
+  view.dispatch({
+    changes: { from, to, insert: insertText },
+    selection: EditorSelection.cursor(start + cursorOffset),
+    scrollIntoView: true,
+  });
+  view.focus();
+}
+
+function insertFootnote(view) {
+  const text = view.state.doc.toString();
+  const ids = [...text.matchAll(/\[\^(\d+)\]/g)].map((match) => Number(match[1])).filter(Number.isFinite);
+  const nextId = Math.max(0, ...ids) + 1;
+  const { from, to } = view.state.selection.main;
+  const marker = `[^${nextId}]`;
+  const definition = `\n\n[^${nextId}]: Footnote text`;
+  view.dispatch({
+    changes: [
+      { from, to, insert: marker },
+      { from: view.state.doc.length, insert: definition },
+    ],
+    selection: EditorSelection.cursor(from + marker.length),
+    scrollIntoView: true,
+  });
+  view.focus();
+}
+
 export function createEditorManager(options) {
   const { parent, onDocChange, onSelectionChange = () => {} } = options;
+  let typewriterMode = false;
   let view = new EditorView({
-    state: createState("", onDocChange, onSelectionChange),
+    state: createState("", onDocChange, onSelectionChange, { typewriterMode }),
     parent,
   });
 
@@ -365,7 +450,7 @@ export function createEditorManager(options) {
       return view;
     },
     setDocument(text) {
-      view.setState(createState(text, onDocChange, onSelectionChange));
+      view.setState(createState(text, onDocChange, onSelectionChange, { typewriterMode }));
       onSelectionChange(view.state);
     },
     getText() {
@@ -470,13 +555,29 @@ export function createEditorManager(options) {
         effects: clearSearchDecorationsEffect.of(null),
       });
     },
+    insertTextAtSelection(text, options = {}) {
+      const insertText = String(text ?? "");
+      const transaction = view.state.changeByRange((range) => {
+        const anchor = range.from + (options.select?.from ?? insertText.length);
+        const head = range.from + (options.select?.to ?? options.select?.from ?? insertText.length);
+        return {
+          changes: { from: range.from, to: range.to, insert: insertText },
+          range: EditorSelection.range(anchor, head),
+        };
+      });
+      view.dispatch(transaction);
+      view.focus();
+    },
+    setTypewriterMode(enabled) {
+      typewriterMode = Boolean(enabled);
+    },
     focus() {
       view.focus();
     },
     rebuildFromCurrentText() {
       const text = view.state.doc.toString();
       const selection = view.state.selection.main.head;
-      view.setState(createState(text, onDocChange, onSelectionChange));
+      view.setState(createState(text, onDocChange, onSelectionChange, { typewriterMode }));
       view.dispatch({ selection: EditorSelection.cursor(Math.min(selection, text.length)) });
     },
     destroy() {
@@ -502,8 +603,20 @@ export function createEditorManager(options) {
         case "italic":
           toggleWrapFormatting(view, "Emphasis", "*");
           break;
+        case "strikethrough":
+          toggleWrapFormatting(view, "Strikethrough", "~~");
+          break;
+        case "inline-code":
+          toggleWrapFormatting(view, "InlineCode", "`", "`", "code");
+          break;
         case "bullet":
           toggleLinePrefix(view, "- ");
+          break;
+        case "ordered":
+          toggleLinePattern(view, /^\d+\.\s+/, (index) => `${index + 1}. `);
+          break;
+        case "task":
+          toggleLinePattern(view, /^- \[[ xX]\]\s+/, () => "- [ ] ");
           break;
         case "quote":
           toggleLinePrefix(view, "> ");
@@ -513,6 +626,15 @@ export function createEditorManager(options) {
           break;
         case "link":
           applyWrapFormatting(view, "[", "](https://example.com)", "link text");
+          break;
+        case "image":
+          applyWrapFormatting(view, "![", "](image.png)", "alt text");
+          break;
+        case "fenced-code":
+          insertBlock(view, "```\ncode\n```", 4);
+          break;
+        case "footnote":
+          insertFootnote(view);
           break;
         case "undo":
           undo(view);

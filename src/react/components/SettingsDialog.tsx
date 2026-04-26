@@ -32,6 +32,13 @@ export function SettingsDialog({ open, settings, onClose, onUpdate }: SettingsDi
               <span className="settings-checkbox-row__supporting">Save opened files automatically after edits.</span>
             </span>
           </label>
+          <label className="settings-checkbox-row" htmlFor="settingsTypewriterMode">
+            <MdCheckbox id="settingsTypewriterMode" checked={settings.typewriterMode === true} onChangeChecked={(checked) => onUpdate((draft) => ({ ...draft, typewriterMode: checked }))} />
+            <span className="settings-checkbox-row__text">
+              <span className="settings-checkbox-row__label">Typewriter Mode</span>
+              <span className="settings-checkbox-row__supporting">Keep the active writing line near the center while typing.</span>
+            </span>
+          </label>
           <div className="settings-theme-field">
             <div className="settings-theme-field__label">Theme</div>
             <div id="settingsThemePicker" className="theme-picker" role="group" aria-label="Theme">

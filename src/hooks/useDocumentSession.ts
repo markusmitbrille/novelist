@@ -24,7 +24,6 @@ export type DocumentSessionState = {
 
 type DocumentSessionAction =
   | { type: "edit-text"; text: string; autosaveEnabled: boolean }
-  | { type: "set-title"; title: string; autosaveEnabled: boolean }
   | { type: "load-file"; file: OpenedMarkdownFile }
   | { type: "new-document" }
   | { type: "saving" }
@@ -54,13 +53,6 @@ function documentSessionReducer(state: DocumentSessionState, action: DocumentSes
         revision: state.revision + 1,
         isDirty,
         saveStatus: isDirty ? (state.fileHandle && action.autosaveEnabled ? "Autosaving..." : "Unsaved changes.") : "Saved.",
-      };
-    case "set-title":
-      return {
-        ...state,
-        title: normalizeDocumentTitle(action.title),
-        isDirty: true,
-        saveStatus: state.fileHandle && action.autosaveEnabled ? "Autosaving..." : "Unsaved changes.",
       };
     case "load-file":
       return {
@@ -176,10 +168,6 @@ export function useDocumentSession(autosaveEnabled = true) {
     }
   }
 
-  function setTitle(title: string) {
-    dispatch({ type: "set-title", title, autosaveEnabled: autosaveEnabledRef.current });
-  }
-
   useEffect(() => {
     if (!autosaveEnabled) {
       clearAutosave();
@@ -246,7 +234,6 @@ export function useDocumentSession(autosaveEnabled = true) {
     state,
     dirtyDialogOpen,
     setText,
-    setTitle,
     saveCurrent,
     saveAs,
     newDocument,

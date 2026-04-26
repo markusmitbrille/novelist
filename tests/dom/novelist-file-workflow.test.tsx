@@ -126,6 +126,7 @@ describe("Novelist file workflow", () => {
 
     expect(writes).toEqual([]);
     expect(window.__NOVELIST_TEST_API__?.getState().isDirty).toBe(true);
+    expect(document.querySelector("#toolbarStatus")?.textContent).toBe("Unsaved changes.");
   });
 
   it("saves manually when autosave is disabled", async () => {
@@ -168,7 +169,17 @@ describe("Novelist file workflow", () => {
       fontFamily: "'Times New Roman', Times, serif",
       fontSize: 19,
       autosaveEnabled: false,
+      typewriterMode: false,
     });
+  });
+
+  it("renders status without obsolete title or caret offset UI", () => {
+    installFileSystemMocks();
+    render(<App />);
+
+    expect(document.querySelector("#documentTitleField")).toBeNull();
+    expect(screen.getByText(/Untitled\.md \| Line 1, Col 1 \| 0 words/)).toBeTruthy();
+    expect(document.querySelector(".menubar__caret-text")?.textContent).not.toContain("Caret");
   });
 
   it("keeps repeated dirty edits reflected in status-derived UI", async () => {
@@ -185,6 +196,33 @@ describe("Novelist file workflow", () => {
     });
     expect(screen.getByText(/4 words/)).toBeTruthy();
     expect(window.__NOVELIST_TEST_API__?.getState().isDirty).toBe(true);
+  });
+
+  it("uses Enter and Escape for dialog primary and cancel behavior", async () => {
+    const { writes } = installFileSystemMocks();
+    render(<App />);
+
+    act(() => {
+      window.__NOVELIST_TEST_API__?.setText?.("Dirty draft.");
+    });
+    await act(async () => {
+      fireEvent.click(document.querySelector('[data-menu-action="new"]') as Element);
+    });
+    await waitFor(() => expect(screen.getByText("Save your changes before replacing the current document?")).toBeTruthy());
+
+    await act(async () => {
+      fireEvent.keyDown(document, { key: "Escape" });
+    });
+    expect(window.__NOVELIST_TEST_API__?.getState().text).toBe("Dirty draft.");
+
+    await act(async () => {
+      fireEvent.click(document.querySelector('[data-menu-action="new"]') as Element);
+    });
+    await act(async () => {
+      fireEvent.keyDown(document, { key: "Enter" });
+    });
+    await waitFor(() => expect(writes.at(-1)).toBe("Dirty draft."));
+    await waitFor(() => expect(window.__NOVELIST_TEST_API__?.getState().text).toBe(""));
   });
 
   it("guards dirty documents before replacing them with New", async () => {
@@ -228,6 +266,17 @@ describe("Novelist file workflow", () => {
 
     expect(window.showSaveFilePicker).toHaveBeenCalled();
     expect(writes.at(-1)).toBe("Fresh document.");
+  });
+
+  it("opens About from the app logo button", async () => {
+    installFileSystemMocks();
+    render(<App />);
+
+    await act(async () => {
+      fireEvent.click(document.querySelector("#appLogoButton") as Element);
+    });
+
+    await waitFor(() => expect(screen.getByText("About Novelist")).toBeTruthy());
   });
 
   it("shows a Chromium requirement when File System Access is unavailable", () => {

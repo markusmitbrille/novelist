@@ -28,6 +28,7 @@ export default function App() {
     isSupported,
     documentText: documentSession.state.text,
     documentRevision: documentSession.state.revision,
+    typewriterMode: settings.typewriterMode,
     onTextChange: documentSession.setText,
     onEditorActivity: () => syncSearchRef.current(),
   });
@@ -110,6 +111,34 @@ export default function App() {
   }, [searchController.search, settingsOpen, wordCountOpen, aboutOpen, documentSession.dirtyDialogOpen]);
 
   useEffect(() => {
+    const handleDialogKeyDown = (event: KeyboardEvent) => {
+      if (event.isComposing) {
+        return;
+      }
+      if (documentSession.dirtyDialogOpen) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          documentSession.resolveDirtyReplacement("save");
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          documentSession.resolveDirtyReplacement("cancel");
+        }
+        return;
+      }
+      if (settingsOpen || wordCountOpen || aboutOpen) {
+        if (event.key === "Enter" || event.key === "Escape") {
+          event.preventDefault();
+          setSettingsOpen(false);
+          setWordCountOpen(false);
+          setAboutOpen(false);
+        }
+      }
+    };
+    document.addEventListener("keydown", handleDialogKeyDown, true);
+    return () => document.removeEventListener("keydown", handleDialogKeyDown, true);
+  }, [settingsOpen, wordCountOpen, aboutOpen, documentSession.dirtyDialogOpen]);
+
+  useEffect(() => {
     window.__NOVELIST_TEST_API__ = {
       getState() {
         return {
@@ -145,14 +174,12 @@ export default function App() {
   return (
     <div id="novelistRoot" className="novelist-app" data-app-ready="true" data-dirty={documentSession.state.isDirty ? "true" : "false"}>
       <Menubar
-        title={documentSession.state.title}
         displayName={displayName}
         saveStatus={documentSession.state.saveStatus}
-        isDirty={documentSession.state.isDirty}
         caret={editorBridge.caret}
         wordCount={wordCount}
-        onTitleChange={documentSession.setTitle}
         onMenuAction={handleMenuAction}
+        onAppLogoClick={() => setAboutOpen(true)}
       />
 
       <FormatBar activeFormats={editorBridge.activeFormats} onMenuAction={handleMenuAction} />

@@ -29,9 +29,11 @@ export const MENU_ITEMS: Record<MenuName, MenuItemDefinition[]> = {
     { action: "settings", label: "Editor Settings" },
   ],
   insert: [
-    { action: "divider", label: "Rule" },
     { action: "link", label: "Link" },
-    { action: "image", label: "Image", disabled: true },
+    { action: "image", label: "Image" },
+    { action: "fenced-code", label: "Code Block" },
+    { action: "footnote", label: "Footnote" },
+    { action: "divider", label: "Rule" },
   ],
   format: [
     { action: "heading-1", label: "Heading 1" },
@@ -40,8 +42,12 @@ export const MENU_ITEMS: Record<MenuName, MenuItemDefinition[]> = {
     { action: "format-divider-1", divider: true },
     { action: "bold", label: "Bold" },
     { action: "italic", label: "Italic" },
+    { action: "strikethrough", label: "Strikethrough" },
+    { action: "inline-code", label: "Inline Code" },
     { action: "format-divider-2", divider: true },
     { action: "bullet", label: "Bullet List" },
+    { action: "ordered", label: "Ordered List" },
+    { action: "task", label: "Task List" },
     { action: "quote", label: "Blockquote" },
   ],
   help: [

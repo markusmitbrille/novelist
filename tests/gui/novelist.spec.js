@@ -48,13 +48,30 @@ async function clickMenuAction(page, action) {
     "word-count": "view",
     divider: "insert",
     link: "insert",
+    image: "insert",
+    "fenced-code": "insert",
+    footnote: "insert",
     about: "help",
+    "heading-1": "format",
+    "heading-2": "format",
+    "heading-3": "format",
+    bold: "format",
+    italic: "format",
+    strikethrough: "format",
+    "inline-code": "format",
+    bullet: "format",
+    ordered: "format",
+    task: "format",
+    quote: "format",
   };
   const menuName = menuByAction[action];
   if (!menuName) {
     throw new Error(`No visible menu mapped for action ${action}`);
   }
-  await page.locator(`[data-menu-trigger="${menuName}"]`).click();
+  await page.locator(`[data-menu-trigger="${menuName}"]`).dispatchEvent("pointerdown", {
+    pointerType: "mouse",
+    button: 0,
+  });
   const item = page.locator(`md-menu-item[data-menu-action="${action}"]`);
   await expect(item).toBeVisible();
   await item.click();
@@ -103,6 +120,7 @@ test.describe("Novelist", () => {
     await page.evaluate(() => window.__NOVELIST_TEST_API__.setText("Alpha beta Alpha"));
 
     await clickMenuAction(page, "replace");
+    await expect(page.locator("#searchPopup")).toBeVisible();
     await page.locator("#searchQueryInput").evaluate((element) => {
       element.value = "Alpha";
       element.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
@@ -138,6 +156,7 @@ test.describe("Novelist", () => {
     await expect(page.locator("#settingsBackgroundImage")).toHaveCount(0);
     await expect(page.locator("#settingsCurrentLineHighlight")).toHaveCount(0);
     await expect(page.locator("#settingsAutosaveEnabled")).toBeVisible();
+    await expect(page.locator("#settingsTypewriterMode")).toBeVisible();
 
     const overflow = await page.locator("#settingsDialog [slot='content']").evaluate((element) => ({
       scrollWidth: element.scrollWidth,
@@ -183,6 +202,8 @@ test.describe("Novelist", () => {
 
     await page.locator("#settingsAutosaveEnabled").click();
     await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem("novelist:settings:v1")).autosaveEnabled)).toBe(false);
+    await page.locator("#settingsTypewriterMode").click();
+    await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem("novelist:settings:v1")).typewriterMode)).toBe(true);
   });
 
   test("word count dialog opens with document stats", async ({ page }) => {
@@ -211,5 +232,70 @@ test.describe("Novelist", () => {
     await page.waitForTimeout(300);
 
     await expect(page.locator(".cm-selectionMatch, .cm-selectionMatch-main")).toHaveCount(0);
+  });
+
+  test("shortcuts and editor chrome use Chromium-safe behavior", async ({ page }) => {
+    await gotoApp(page);
+
+    await expect(page.locator("#documentTitleField")).toHaveCount(0);
+    await expect(page.locator(".menubar__caret-text")).not.toContainText("Caret");
+
+    await page.keyboard.press(process.platform === "darwin" ? "Meta+G" : "Control+G");
+    await expect(page.locator(".cm-panel.cm-search")).toHaveCount(0);
+    await expect(page.locator("#searchPopup")).not.toBeVisible();
+
+    await page.keyboard.press(process.platform === "darwin" ? "Meta+F" : "Control+F");
+    await expect(page.locator("#searchPopup")).toBeVisible();
+    await page.locator("#searchCloseButton").click();
+
+    await page.keyboard.press(process.platform === "darwin" ? "Meta+Shift+H" : "Control+H");
+    await expect(page.locator("#searchPopup")).toBeVisible();
+    await expect(page.locator("#searchReplaceRow")).toBeVisible();
+    await page.locator("#searchCloseButton").click();
+
+    await page.keyboard.press(process.platform === "darwin" ? "Meta+Comma" : "Control+Comma");
+    await expect(page.locator("#settingsDialog")).not.toBeVisible();
+
+    await page.keyboard.press(process.platform === "darwin" ? "Meta+Shift+8" : "Control+Shift+8");
+    await expect.poll(async () => page.evaluate(() => window.__NOVELIST_TEST_API__.getState().text)).toBe("");
+
+    await page.locator('[data-menu-trigger="edit"]').dispatchEvent("pointerdown", {
+      pointerType: "mouse",
+      button: 0,
+    });
+    await expect(page.locator('md-menu-item[data-menu-action="find"]')).toBeVisible();
+    await expect(page.locator('md-menu-item[data-menu-action="replace"]')).toBeVisible();
+  });
+
+  test("new formatting actions insert markdown", async ({ page }) => {
+    await gotoApp(page);
+    await page.evaluate(() => window.__NOVELIST_TEST_API__.setText("Alpha"));
+
+    await page.locator(".cm-content").click();
+    await page.keyboard.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
+    await clickMenuAction(page, "strikethrough");
+    await expect.poll(async () => page.evaluate(() => window.__NOVELIST_TEST_API__.getState().text)).toBe("~~Alpha~~");
+
+    await expect(page.locator('[data-format="symbol"]')).toHaveCount(0);
+    await expect(page.locator('[data-format="emoji"]')).toHaveCount(0);
+  });
+
+  test("app logo opens the About dialog", async ({ page }) => {
+    await gotoApp(page);
+
+    await page.locator("#appLogoButton").click();
+    await expect(page.locator("#aboutDialog")).toBeVisible();
+  });
+
+  test("editor text margins are symmetrical", async ({ page }) => {
+    await gotoApp(page);
+    const padding = await page.locator(".cm-line").first().evaluate((line) => {
+      const styles = getComputedStyle(line);
+      return {
+        left: styles.paddingLeft,
+        right: styles.paddingRight,
+      };
+    });
+    expect(padding.left).toBe(padding.right);
   });
 });

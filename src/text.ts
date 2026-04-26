@@ -39,5 +39,6 @@ export function normalizeSettings(settings: Partial<NovelistSettings> | null | u
       : DEFAULT_SETTINGS.fontFamily,
     theme: settings?.theme && THEME_PRESETS[settings.theme] ? String(settings.theme) : DEFAULT_SETTINGS.theme,
     autosaveEnabled: settings?.autosaveEnabled !== false,
+    typewriterMode: settings?.typewriterMode === true,
   };
 }

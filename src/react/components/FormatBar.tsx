@@ -10,13 +10,20 @@ const FORMAT_ACTIONS: Array<[string, string, string]> = [
   ["heading-3", "format_h3", "Heading 3"],
   ["bold", "format_bold", "Bold"],
   ["italic", "format_italic", "Italic"],
+  ["strikethrough", "strikethrough_s", "Strikethrough"],
+  ["inline-code", "code", "Inline Code"],
   ["bullet", "format_list_bulleted", "Bullet List"],
+  ["ordered", "format_list_numbered", "Ordered List"],
+  ["task", "checklist", "Task List"],
   ["quote", "format_quote", "Blockquote"],
   ["divider", "horizontal_rule", "Horizontal Rule"],
+  ["fenced-code", "data_object", "Code Block"],
   ["link", "link", "Link"],
+  ["image", "image", "Image"],
+  ["footnote", "approval_delegation", "Footnote"],
 ];
 
-const TOGGLE_ACTIONS = new Set(["heading-1", "heading-2", "heading-3", "bold", "italic", "bullet", "quote"]);
+const TOGGLE_ACTIONS = new Set(["heading-1", "heading-2", "heading-3", "bold", "italic", "strikethrough", "inline-code", "bullet", "ordered", "task", "quote"]);
 
 type FormatBarProps = {
   activeFormats: Record<string, boolean>;

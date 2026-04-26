@@ -3,6 +3,7 @@ export type NovelistSettings = {
   fontFamily: string;
   fontSize: number;
   autosaveEnabled: boolean;
+  typewriterMode: boolean;
 };
 
 export type EditorActiveFormats = Record<string, boolean>;
@@ -50,6 +51,8 @@ export type EditorManager = {
     activeMatch?: { from: number; to: number } | null;
   }) => void;
   clearSearchDecorations: () => void;
+  insertTextAtSelection: (text: string, options?: { select?: { from: number; to: number } }) => void;
+  setTypewriterMode: (enabled: boolean) => void;
   applyFormat: (action: string) => void;
   focus: () => void;
   rebuildFromCurrentText: () => void;

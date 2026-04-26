@@ -114,8 +114,8 @@ body {
 }
 
 .menubar {
-  grid-template-columns: minmax(260px, 420px) minmax(260px, 1fr) minmax(260px, auto);
-  gap: 1rem;
+  grid-template-columns: auto minmax(260px, 1fr) minmax(260px, auto);
+  gap: 0.75rem;
   padding: 0.65rem 1.1rem 0.55rem;
   z-index: 20;
 }
@@ -123,21 +123,14 @@ body {
 .menubar__brand {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  width: 40px;
   min-width: 0;
 }
 
-.document-title-field {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: block;
-  --md-outlined-text-field-container-shape: 16px;
-  --md-outlined-text-field-top-space: 7px;
-  --md-outlined-text-field-bottom-space: 7px;
-  --md-outlined-text-field-input-text-size: 0.95rem;
-  --md-outlined-text-field-input-text-line-height: 1.1rem;
-  --md-outlined-text-field-input-text-font: 'Roboto', system-ui, sans-serif;
-  --md-outlined-text-field-input-text-weight: 500;
+#appLogoButton {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
 }
 
 .menubar__menus {
@@ -710,15 +703,6 @@ body {
     display: none;
   }
 
-  .search-popup__row,
-  .search-popup__row--primary {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-  }
-
-  .search-popup__count {
-    grid-column: 1 / -1;
-  }
-
   #settingsDialog {
     width: min(calc(100vw - 24px), 464px);
     min-width: 0;
@@ -730,6 +714,15 @@ body {
     min-width: min(calc(100vw - 24px), 688px);
     max-width: min(calc(100vw - 24px), 688px);
     max-height: calc(100vh - 24px);
+  }
+
+  .search-popup__row,
+  .search-popup__row--primary {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .search-popup__count {
+    grid-column: 1 / -1;
   }
 
   .settings-grid,

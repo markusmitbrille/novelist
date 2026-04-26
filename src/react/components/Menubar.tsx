@@ -3,16 +3,14 @@ import React, { useRef, useState } from "react";
 import { MENU_ORDER } from "../../constants";
 import { getMenuItems, getMenuShortcut } from "../../menu";
 import { icon } from "../head-assets";
-import { MdMenu, MdOutlinedTextField } from "../md3";
+import { MdMenu } from "../md3";
 
 type MenubarProps = {
-  title: string;
   displayName: string;
   saveStatus: string;
-  isDirty: boolean;
   caret: { offset: number; line: number; column: number };
   wordCount: number;
-  onTitleChange: (title: string) => void;
+  onAppLogoClick: () => void;
   onMenuAction: (action: string) => void | Promise<void>;
 };
 
@@ -21,7 +19,7 @@ function menuLabel(name: string) {
 }
 
 export function Menubar(props: MenubarProps) {
-  const { title, displayName, saveStatus, isDirty, caret, wordCount, onTitleChange, onMenuAction } = props;
+  const { displayName, saveStatus, caret, wordCount, onAppLogoClick, onMenuAction } = props;
   const menuAnchorsRef = useRef<Record<string, HTMLElement | null>>({});
   const [openMenuName, setOpenMenuName] = useState<string | null>(null);
 
@@ -32,15 +30,7 @@ export function Menubar(props: MenubarProps) {
   return (
     <header className="menubar">
       <div className="menubar__brand">
-        <md-icon-button id="appLogoButton" aria-label="Novelist">{icon("edit_document")}</md-icon-button>
-        <MdOutlinedTextField
-          id="documentTitleField"
-          className="document-title-field"
-          aria-label="Document title"
-          placeholder="Untitled"
-          value={title}
-          onInputValue={onTitleChange}
-        />
+        <md-icon-button id="appLogoButton" aria-label="About Novelist" data-tooltip="About Novelist" onClick={onAppLogoClick}>{icon("edit_document")}</md-icon-button>
       </div>
       <div className="menubar__menus" id="menubarMenus">
         {MENU_ORDER.map((name) => (
@@ -51,7 +41,10 @@ export function Menubar(props: MenubarProps) {
             className="menubar__menu-trigger"
             data-menu-trigger={name}
             ref={(element) => { menuAnchorsRef.current[name] = element; }}
-            onClick={() => setOpenMenuName(openMenuName === name ? null : name)}
+            onPointerDown={(event) => {
+              event.preventDefault();
+              setOpenMenuName(openMenuName === name ? null : name);
+            }}
             onMouseEnter={() => {
               if (openMenuName && openMenuName !== name) {
                 setOpenMenuName(name);
@@ -63,8 +56,8 @@ export function Menubar(props: MenubarProps) {
         ))}
       </div>
       <div className="menubar__status">
-        <span id="toolbarStatus" className="menubar__status-text">{isDirty ? `${saveStatus} Unsaved changes.` : saveStatus}</span>
-        <span className="menubar__caret-text">{`${displayName} | Caret ${caret.offset} | Line ${caret.line}, Col ${caret.column} | ${wordCount.toLocaleString()} words`}</span>
+        <span id="toolbarStatus" className="menubar__status-text">{saveStatus}</span>
+        <span className="menubar__caret-text">{`${displayName} | Line ${caret.line}, Col ${caret.column} | ${wordCount.toLocaleString()} words`}</span>
       </div>
       {MENU_ORDER.map((menuName) => (
         <MdMenu
