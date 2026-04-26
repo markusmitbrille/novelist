@@ -243,7 +243,7 @@ function createState(docText, onDocChange, onSelectionChange, options = {}) {
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           onDocChange(update.state.doc.toString(), update.state);
-          if (options.typewriterMode) {
+          if (options.isTypewriterModeEnabled?.()) {
             update.view.dispatch({
               effects: EditorView.scrollIntoView(update.state.selection.main.head, { y: "center" }),
             });
@@ -440,8 +440,9 @@ function insertFootnote(view) {
 export function createEditorManager(options) {
   const { parent, onDocChange, onSelectionChange = () => {} } = options;
   let typewriterMode = false;
+  const isTypewriterModeEnabled = () => typewriterMode;
   let view = new EditorView({
-    state: createState("", onDocChange, onSelectionChange, { typewriterMode }),
+    state: createState("", onDocChange, onSelectionChange, { isTypewriterModeEnabled }),
     parent,
   });
 
@@ -450,7 +451,7 @@ export function createEditorManager(options) {
       return view;
     },
     setDocument(text) {
-      view.setState(createState(text, onDocChange, onSelectionChange, { typewriterMode }));
+      view.setState(createState(text, onDocChange, onSelectionChange, { isTypewriterModeEnabled }));
       onSelectionChange(view.state);
     },
     getText() {
@@ -577,7 +578,7 @@ export function createEditorManager(options) {
     rebuildFromCurrentText() {
       const text = view.state.doc.toString();
       const selection = view.state.selection.main.head;
-      view.setState(createState(text, onDocChange, onSelectionChange, { typewriterMode }));
+      view.setState(createState(text, onDocChange, onSelectionChange, { isTypewriterModeEnabled }));
       view.dispatch({ selection: EditorSelection.cursor(Math.min(selection, text.length)) });
     },
     destroy() {

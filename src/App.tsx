@@ -153,6 +153,19 @@ export default function App() {
       setText(text: string) {
         documentSession.setText(text);
       },
+      getSelection() {
+        return editorBridge.editorRef.current?.getSelectionRange() ?? null;
+      },
+      setSelection(index: number) {
+        editorBridge.editorRef.current?.setSelection(index);
+        editorBridge.syncEditorUiState();
+      },
+      insertTextAtSelection(text: string) {
+        editorBridge.insertTextAtSelection(text);
+      },
+      focusEditor() {
+        editorBridge.editorRef.current?.focus();
+      },
       save() {
         return documentSession.saveCurrent("Saved.");
       },
@@ -200,6 +213,7 @@ export default function App() {
             }}
             onSearchReplacementInput={(value) => searchController.setSearch({ replacement: value })}
             onGoToAdjacentSearchMatch={searchController.goToAdjacentSearchMatch}
+            onSearchQueryEnter={() => searchController.goToAdjacentSearchMatch(1)}
             onSearchMatchCaseToggle={() => {
               searchController.setSearchState((current) => ({ ...current, matchCase: !current.matchCase }));
               queueMicrotask(() => searchController.syncSearchResults({ reveal: false }));

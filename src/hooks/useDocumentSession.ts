@@ -78,14 +78,13 @@ function documentSessionReducer(state: DocumentSessionState, action: DocumentSes
         saveStatus: "Saving...",
       };
     case "saved":
+      const textWasCurrent = action.text === state.text;
       return {
         ...state,
-        text: action.text,
-        revision: state.revision + 1,
         fileHandle: action.fileHandle === undefined ? state.fileHandle : action.fileHandle,
         fileName: action.fileName === undefined ? state.fileName : action.fileName,
-        isDirty: false,
-        saveStatus: action.status,
+        isDirty: !textWasCurrent,
+        saveStatus: textWasCurrent ? action.status : "Unsaved changes.",
         lastSavedText: action.text,
       };
     case "status":

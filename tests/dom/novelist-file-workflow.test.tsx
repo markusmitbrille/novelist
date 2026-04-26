@@ -80,12 +80,17 @@ describe("Novelist file workflow", () => {
     act(() => {
       window.__NOVELIST_TEST_API__?.setText?.("# Chapter\n\nRevised line.");
     });
+    await waitFor(() => expect(window.__NOVELIST_TEST_API__?.getState().text).toBe("# Chapter\n\nRevised line."));
+    act(() => {
+      window.__NOVELIST_TEST_API__?.setSelection?.(11);
+    });
     await act(async () => {
       fireEvent.click(document.querySelector('[data-menu-action="save"]') as Element);
     });
 
     expect(writes.at(-1)).toBe("# Chapter\n\nRevised line.");
     expect(window.__NOVELIST_TEST_API__?.getState().isDirty).toBe(false);
+    expect(window.__NOVELIST_TEST_API__?.getSelection?.()?.head).toBe(11);
   });
 
   it("autosaves edits to the opened file", async () => {
@@ -98,13 +103,19 @@ describe("Novelist file workflow", () => {
     await waitFor(() => expect(window.__NOVELIST_TEST_API__?.getState().fileName).toBe("chapter.md"));
 
     vi.useFakeTimers();
-    await act(async () => {
+    act(() => {
       window.__NOVELIST_TEST_API__?.setText?.("Autosaved text.");
+    });
+    act(() => {
+      window.__NOVELIST_TEST_API__?.setSelection?.(9);
+    });
+    await act(async () => {
       vi.advanceTimersByTime(700);
     });
     vi.useRealTimers();
 
     await waitFor(() => expect(writes.at(-1)).toBe("Autosaved text."));
+    expect(window.__NOVELIST_TEST_API__?.getSelection?.()?.head).toBe(9);
   });
 
   it("does not autosave when autosave is disabled", async () => {

@@ -125,6 +125,10 @@ test.describe("Novelist", () => {
       element.value = "Alpha";
       element.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
     });
+    await expect(page.locator("#searchMatchCount")).toHaveText("1 of 2");
+    await page.locator("#searchQueryInput").focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#searchMatchCount")).toHaveText("2 of 2");
     await page.locator("#searchReplaceInput").evaluate((element) => {
       element.value = "Gamma";
       element.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
@@ -204,6 +208,28 @@ test.describe("Novelist", () => {
     await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem("novelist:settings:v1")).autosaveEnabled)).toBe(false);
     await page.locator("#settingsTypewriterMode").click();
     await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem("novelist:settings:v1")).typewriterMode)).toBe(true);
+    await page.locator("#settingsDialog md-text-button").click();
+    await expect(page.locator("#settingsDialog")).not.toBeVisible();
+
+    const longText = Array.from({ length: 90 }, (_, index) => `Line ${index + 1}`).join("\n");
+    const targetOffset = longText.indexOf("Line 55");
+    await page.evaluate((text) => window.__NOVELIST_TEST_API__.setText(text), longText);
+    await expect.poll(async () => page.evaluate(() => window.__NOVELIST_TEST_API__.getState().text)).toBe(longText);
+    await page.evaluate((offset) => window.__NOVELIST_TEST_API__.setSelection(offset), targetOffset);
+    await page.evaluate(() => window.__NOVELIST_TEST_API__.insertTextAtSelection("x"));
+    await expect.poll(async () => page.evaluate(() => window.__NOVELIST_TEST_API__.getState().text.includes("xLine 55"))).toBe(true);
+    await expect.poll(async () => page.locator(".cm-cursor").first().evaluate((cursor) => {
+      const cursorRect = cursor.getBoundingClientRect();
+      const scrollerRect = cursor.closest(".cm-scroller").getBoundingClientRect();
+      const cursorCenter = cursorRect.top + cursorRect.height / 2;
+      return (cursorCenter - scrollerRect.top) / scrollerRect.height;
+    })).toBeGreaterThan(0.35);
+    await expect.poll(async () => page.locator(".cm-cursor").first().evaluate((cursor) => {
+      const cursorRect = cursor.getBoundingClientRect();
+      const scrollerRect = cursor.closest(".cm-scroller").getBoundingClientRect();
+      const cursorCenter = cursorRect.top + cursorRect.height / 2;
+      return (cursorCenter - scrollerRect.top) / scrollerRect.height;
+    })).toBeLessThan(0.65);
   });
 
   test("word count dialog opens with document stats", async ({ page }) => {
@@ -242,7 +268,8 @@ test.describe("Novelist", () => {
 
     await page.keyboard.press(process.platform === "darwin" ? "Meta+G" : "Control+G");
     await expect(page.locator(".cm-panel.cm-search")).toHaveCount(0);
-    await expect(page.locator("#searchPopup")).not.toBeVisible();
+    await expect(page.locator("#searchPopup")).toBeVisible();
+    await page.locator("#searchCloseButton").click();
 
     await page.keyboard.press(process.platform === "darwin" ? "Meta+F" : "Control+F");
     await expect(page.locator("#searchPopup")).toBeVisible();

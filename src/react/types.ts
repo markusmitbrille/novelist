@@ -42,6 +42,7 @@ export type EditorManager = {
   createSearchQuery: (searchText: string, options?: { caseSensitive?: boolean }) => unknown;
   findMatches: (query: unknown, scope?: { from: number; to: number } | null) => Array<{ from: number; to: number }>;
   getSelectionRange: () => { from: number; to: number; head: number; anchor: number; empty: boolean };
+  setSelection: (index: number) => void;
   selectAndRevealRange: (range: { from: number; to: number }, options?: { focus?: boolean }) => void;
   replaceRange: (range: { from: number; to: number }, replacement: string, options?: { focus?: boolean }) => { from: number; to: number } | null;
   replaceAllRanges: (matches: Array<{ from: number; to: number }>, replacement: string, options?: { focus?: boolean }) => void;
@@ -71,6 +72,10 @@ declare global {
         unsupported: boolean;
       };
       setText?: (text: string) => void;
+      getSelection?: () => { from: number; to: number; head: number; anchor: number; empty: boolean } | null;
+      setSelection?: (index: number) => void;
+      insertTextAtSelection?: (text: string) => void;
+      focusEditor?: () => void;
       save?: () => Promise<void>;
     };
     showOpenFilePicker?: (options?: unknown) => Promise<FileSystemFileHandle[]>;

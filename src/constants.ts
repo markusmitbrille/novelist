@@ -390,6 +390,7 @@ export type ShortcutDefinition = {
   code?: string;
   modifiers?: Array<"primary" | "alt" | "shift">;
   platform?: "default" | "mac";
+  display?: boolean;
 };
 
 export const MENU_ACTION_SHORTCUTS: Record<string, ShortcutDefinition[]> = {
@@ -402,7 +403,10 @@ export const MENU_ACTION_SHORTCUTS: Record<string, ShortcutDefinition[]> = {
     { key: "y", modifiers: ["primary"] },
     { key: "z", modifiers: ["primary", "shift"] },
   ],
-  find: [{ key: "f", modifiers: ["primary"] }],
+  find: [
+    { key: "f", modifiers: ["primary"] },
+    { key: "g", modifiers: ["primary"], display: false },
+  ],
   replace: [
     { key: "h", modifiers: ["primary"], platform: "default" },
     { key: "h", modifiers: ["primary", "shift"], platform: "mac" },
@@ -469,6 +473,9 @@ export function formatShortcutLabel(shortcut: ShortcutDefinition, options: { mac
 export function getShortcutLabel(action: string, options: { mac?: boolean } = {}) {
   const mac = options.mac ?? isMacPlatform();
   const shortcuts = (MENU_ACTION_SHORTCUTS[action] || []).filter((shortcut) => {
+    if (shortcut.display === false) {
+      return false;
+    }
     if (!shortcut.platform) {
       return true;
     }

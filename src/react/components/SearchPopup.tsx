@@ -11,6 +11,7 @@ type SearchPopupProps = {
   onSearchQueryInput: (value: string) => void;
   onSearchReplacementInput: (value: string) => void;
   onGoToAdjacentSearchMatch: (direction: number) => void;
+  onSearchQueryEnter: () => void;
   onSearchMatchCaseToggle: () => void;
   onCloseSearchPopup: () => void;
   onReplaceCurrentSearchMatch: () => void;
@@ -24,6 +25,7 @@ export function SearchPopup(props: SearchPopupProps) {
     onSearchQueryInput,
     onSearchReplacementInput,
     onGoToAdjacentSearchMatch,
+    onSearchQueryEnter,
     onSearchMatchCaseToggle,
     onCloseSearchPopup,
     onReplaceCurrentSearchMatch,
@@ -34,7 +36,20 @@ export function SearchPopup(props: SearchPopupProps) {
     <div id="searchPopup" className="search-popup" hidden={!search.isOpen}>
       <div className="search-popup__card">
         <div className="search-popup__row search-popup__row--primary">
-          <MdOutlinedTextField id="searchQueryInput" className="search-popup__field" label={search.mode === "replace" && search.scope ? "Find in selection" : "Find"} value={search.query} ref={searchQueryRef} onInputValue={onSearchQueryInput}>
+          <MdOutlinedTextField
+            id="searchQueryInput"
+            className="search-popup__field"
+            label={search.mode === "replace" && search.scope ? "Find in selection" : "Find"}
+            value={search.query}
+            ref={searchQueryRef}
+            onInputValue={onSearchQueryInput}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                onSearchQueryEnter();
+              }
+            }}
+          >
             <span slot="leading-icon" className="material-symbols-rounded" aria-hidden="true">search</span>
           </MdOutlinedTextField>
           <div id="searchMatchCount" className="search-popup__count" aria-live="polite">{search.currentIndex >= 0 ? `${search.currentIndex + 1} of ${search.matches.length}` : `0 of ${search.matches.length}`}</div>

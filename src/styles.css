@@ -315,9 +315,9 @@ body {
 
 .search-popup {
   position: absolute;
-  top: 1.2rem;
-  right: 1.35rem;
-  width: min(680px, calc(100% - 2.7rem));
+  top: 1.55rem;
+  right: 1.75rem;
+  width: min(680px, calc(100% - 3.5rem));
   z-index: 40;
 }
 
@@ -344,12 +344,20 @@ body {
 
 .search-popup__field {
   display: block;
+  --md-outlined-text-field-container-shape: 18px;
 }
 
 .search-popup__count,
 .search-popup__scope-hint {
   color: var(--text-soft);
   font-size: 0.78rem;
+}
+
+.search-popup__count {
+  min-width: 4.6rem;
+  padding-inline: 0.4rem;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .settings-grid {

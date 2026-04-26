@@ -7,6 +7,7 @@ type Shortcut = {
   code?: string;
   modifiers?: Array<"primary" | "alt" | "shift">;
   platform?: "default" | "mac";
+  display?: boolean;
 };
 
 export function normalizeShortcutKey(value: string | undefined) {
